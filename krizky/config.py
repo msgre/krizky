@@ -84,7 +84,7 @@ def validate_config(config: dict, config_dir: Path | None = None) -> None:
     Checks:
     - Sections 'sources' and 'site' exist.
     - In 'sources.tables' exactly one table has 'main: true'.
-    - Paths to transform scripts (if provided) exist on disk.
+    - Every table has a 'transform' script and the path exists on disk.
     - For each 'docs' entry: required attributes 'transform' and 'output' are present.
 
     Args:
@@ -123,15 +123,18 @@ def validate_config(config: dict, config_dir: Path | None = None) -> None:
             f"but found {len(main_tables)}: {', '.join(main_tables)}"
         )
 
-    # Validate transform script paths for tables
+    # Validate transform scripts for tables (required)
     for name, tbl in tables.items():
         transform = tbl.get("transform")
-        if transform:
-            script_path = resolve(transform)
-            if not script_path.exists():
-                raise ConfigError(
-                    f"Transform script for table '{name}' does not exist: {script_path}"
-                )
+        if not transform:
+            raise ConfigError(
+                f"Table '{name}' is missing required attribute 'transform'"
+            )
+        script_path = resolve(transform)
+        if not script_path.exists():
+            raise ConfigError(
+                f"Transform script for table '{name}' does not exist: {script_path}"
+            )
 
     # Validate docs entries
     docs = sources.get("docs") or {}

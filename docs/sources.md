@@ -61,12 +61,14 @@ sources:
             gid: "1158998617"
             skip_rows: 4
             main: true
-            transform: ./transforms/data.sh
+            transform: ./transforms/data.sh   # povinné
         typy:
             id: "11DFObgY-MwwQI-RP8R4YLG_q69KBuWlKD1FIULovkuI"
             gid: "280152183"
-            transform: ./transforms/typy.sh
+            transform: ./transforms/typy.sh   # povinné
 ```
+
+`transform` je pro tabulky povinný. Minimální skript musí alespoň naimportovat CSV do SQLite — generátor webu čte data z databáze, ne přímo ze stažených souborů.
 
 ### `skip_rows`
 

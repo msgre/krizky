@@ -68,7 +68,7 @@ sources:
             gid: "0"                                               # ID listu (gid= v URL)
             skip_rows: 3                                           # přeskočit N úvodních řádků (volitelné)
             main: true                                             # právě jedna tabulka musí být hlavní
-            transform: ./transforms/data.sh
+            transform: ./transforms/data.sh                        # povinné
 
     docs:
         uvod:

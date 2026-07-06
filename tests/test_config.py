@@ -27,7 +27,7 @@ def minimal_valid_config() -> dict:
     return {
         "sources": {
             "tables": {
-                "data": {"main": True},
+                "data": {"main": True, "transform": "/bin/true"},
             },
             "docs": {},
         },
@@ -154,7 +154,7 @@ def test_validate_docs_missing_output() -> None:
     config = {
         "sources": {
             "tables": {
-                "data": {"main": True},
+                "data": {"main": True, "transform": "/bin/true"},
             },
             "docs": {
                 "uvod": {
@@ -222,13 +222,27 @@ def test_validate_docs_missing_transform() -> None:
     """validate_config raises ConfigError when a docs entry lacks 'transform'."""
     config = {
         "sources": {
-            "tables": {"data": {"main": True}},
+            "tables": {"data": {"main": True, "transform": "/bin/true"}},
             "docs": {
                 "uvod": {
                     "id": "some_id",
                     "output": "uvod.md",
                     # 'transform' is intentionally missing
                 },
+            },
+        },
+        "site": {},
+    }
+    with pytest.raises(ConfigError, match="transform"):
+        validate_config(config)
+
+
+def test_validate_tables_missing_transform() -> None:
+    """validate_config raises ConfigError when a table lacks 'transform'."""
+    config = {
+        "sources": {
+            "tables": {
+                "data": {"main": True},  # 'transform' is intentionally missing
             },
         },
         "site": {},
