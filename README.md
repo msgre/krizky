@@ -6,6 +6,23 @@ Data se stahují z veřejně sdílených Google dokumentů, transformují bash s
 
 ## Instalace
 
+### Systémové závislosti
+
+Před instalací musí být v systému dostupné tyto nástroje:
+
+- **[pandoc](https://pandoc.org/)** — konverze Google Docs (DOCX → Markdown) v transform skriptech
+- **[cjpeg](https://libjpeg-turbo.org/)** — optimalizace JPEG fotek (součást balíčku `libjpeg-turbo`)
+
+```bash
+# macOS
+brew install pandoc libjpeg-turbo
+
+# Debian / Ubuntu
+apt install pandoc libjpeg-turbo-progs
+```
+
+### Python
+
 Projekt vyžaduje Python 3.12+ a [uv](https://docs.astral.sh/uv/).
 
 ```bash
