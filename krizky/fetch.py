@@ -87,6 +87,7 @@ def run_transform(
     db_path: Path,
     table_name: str,
     output_path: Optional[Path] = None,
+    skip_rows: int = 0,
 ) -> None:
     """Execute a bash transform script with the standard krizky arguments.
 
@@ -96,6 +97,7 @@ def run_transform(
         db_path: Passed as $2 to the script.
         table_name: Passed as $3 to the script.
         output_path: Passed as $4 to the script; empty string if None.
+        skip_rows: Passed as $5 to the script; 0 if not applicable.
 
     Raises:
         TransformError: If the script exits with a non-zero return code.
@@ -107,6 +109,7 @@ def run_transform(
             str(db_path),
             table_name,
             str(output_path) if output_path is not None else "",
+            str(skip_rows),
         ],
         check=False,
         stdout=sys.stdout,
@@ -148,7 +151,7 @@ def fetch_sources(config: dict, config_dir: Path, transform: bool = False) -> No
             script = (config_dir / table["transform"]).resolve()
             transformed_dir = sources_output / "tables" / name / "transformed"
             transformed_dir.mkdir(parents=True, exist_ok=True)
-            run_transform(script, csv_path, db_path, name)
+            run_transform(script, csv_path, db_path, name, skip_rows=table.get("skip_rows", 0))
 
     # --- Docs ---
     for name, doc in sources.get("docs", {}).items():
@@ -163,7 +166,7 @@ def fetch_sources(config: dict, config_dir: Path, transform: bool = False) -> No
             script = (config_dir / doc["transform"]).resolve()
             output_path = sources_output / "docs" / name / "transformed" / doc["output"]
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            run_transform(script, docx_path, db_path, name, output_path)
+            run_transform(script, docx_path, db_path, name, output_path, skip_rows=0)
             if not output_path.exists():
                 raise TransformError(
                     f"Transform script for doc '{name}' did not produce expected output: {output_path}"
