@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "krizky"
+version = "0.1.0"
+description = "Universal static site generator from Google Sheets, Docs and Drive photos"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.0",
+    "jinja2>=3.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "sqlite-utils>=3.39",
+]
+
+[project.scripts]
+krizky = "krizky.cli:cli"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["krizky"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+]
