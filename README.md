@@ -24,6 +24,12 @@ Projekt vyžaduje Python 3.12+ a [uv](https://docs.astral.sh/uv/).
 uv sync
 ```
 
+### Testy
+
+```bash
+uv run pytest
+```
+
 ## Nový projekt
 
 ```bash

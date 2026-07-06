@@ -22,12 +22,20 @@ def write_yaml(tmp_path: Path, content: str, filename: str = "config.yaml") -> P
     return p
 
 
-def minimal_valid_config() -> dict:
+def make_script(tmp_path: Path) -> Path:
+    """Create a minimal executable script in tmp_path and return its path."""
+    script = tmp_path / "dummy.sh"
+    script.write_text("#!/bin/sh\n")
+    script.chmod(0o755)
+    return script
+
+
+def minimal_valid_config(script_path: Path) -> dict:
     """Return a minimal configuration dict that passes validate_config()."""
     return {
         "sources": {
             "tables": {
-                "data": {"main": True, "transform": "/bin/true"},
+                "data": {"main": True, "transform": str(script_path)},
             },
             "docs": {},
         },
@@ -149,17 +157,18 @@ def test_validate_main_true_duplicate() -> None:
 # test_validate_docs_missing_output
 # ---------------------------------------------------------------------------
 
-def test_validate_docs_missing_output() -> None:
+def test_validate_docs_missing_output(tmp_path: Path) -> None:
     """validate_config raises ConfigError when a docs entry lacks 'output'."""
+    script = make_script(tmp_path)
     config = {
         "sources": {
             "tables": {
-                "data": {"main": True, "transform": "/bin/true"},
+                "data": {"main": True, "transform": str(script)},
             },
             "docs": {
                 "uvod": {
                     "id": "some_id",
-                    "transform": "/bin/true",  # exists on most Unix systems
+                    "transform": str(script),
                     # 'output' is intentionally missing
                 },
             },
@@ -218,11 +227,12 @@ def test_validate_config_missing_site_section() -> None:
         validate_config(config)
 
 
-def test_validate_docs_missing_transform() -> None:
+def test_validate_docs_missing_transform(tmp_path: Path) -> None:
     """validate_config raises ConfigError when a docs entry lacks 'transform'."""
+    script = make_script(tmp_path)
     config = {
         "sources": {
-            "tables": {"data": {"main": True, "transform": "/bin/true"}},
+            "tables": {"data": {"main": True, "transform": str(script)}},
             "docs": {
                 "uvod": {
                     "id": "some_id",
