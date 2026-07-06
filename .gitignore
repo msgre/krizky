@@ -1,6 +1,5 @@
 .env
 sources/
-docs/
 .venv/
 __pycache__/
 *.pyc
