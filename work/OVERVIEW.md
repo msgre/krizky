@@ -14,7 +14,7 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | Fáze | Název                           | Status  | Log soubor |
 |------|---------------------------------|---------|------------|
 | 1    | Projekt + Config                | DONE    | [2026-07-06-01-project-setup.md](2026-07-06-01-project-setup.md) |
-| 2    | Fetch sources                   | TODO    | —          |
+| 2    | Fetch sources                   | DONE    | [2026-07-06-02-fetch-sources.md](2026-07-06-02-fetch-sources.md) |
 | 3    | Site generation – základní typy | TODO    | —          |
 | 4    | Site generation – stitky + stránkování | TODO | —       |
 | 5    | Photos                          | TODO    | —          |

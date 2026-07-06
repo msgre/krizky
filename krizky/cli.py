@@ -233,7 +233,22 @@ def fetch() -> None:
 @click.pass_context
 def fetch_sources(ctx: click.Context, transform: bool) -> None:
     """Download tables and documents from Google."""
-    click.echo("not implemented")
+    config_path = ctx.obj["config"]
+    try:
+        config = load_config(config_path)
+        validate_config(config, config_dir=Path(config_path).parent)
+    except ConfigError as exc:
+        click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
+        raise SystemExit(1) from None
+
+    from krizky.fetch import FetchError, TransformError, fetch_sources as _fetch_sources
+    try:
+        click.echo("Fetching sources...")
+        _fetch_sources(config, config_dir=Path(config_path).parent, transform=transform)
+        click.echo(click.style("OK: Sources fetched successfully.", fg="green"))
+    except (FetchError, TransformError) as exc:
+        click.echo(click.style(f"ERROR: {exc}", fg="red"))
+        raise SystemExit(1) from None
 
 
 @fetch.command("photos")
