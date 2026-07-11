@@ -15,8 +15,8 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 |------|---------------------------------|---------|------------|
 | 1    | Projekt + Config                | DONE    | [2026-07-06-01-project-setup.md](2026-07-06-01-project-setup.md) |
 | 2    | Fetch sources                   | DONE    | [2026-07-06-02-fetch-sources.md](2026-07-06-02-fetch-sources.md) |
-| 3    | Site generation – základní typy | TODO    | —          |
-| 4    | Site generation – stitky + stránkování | TODO | —       |
+| 3    | Site generation – základní typy | DONE    | [2026-07-11-01-site-generation.md](2026-07-11-01-site-generation.md) |
+| 4    | Site generation – stitky + stránkování | DONE | [2026-07-11-01-site-generation.md](2026-07-11-01-site-generation.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 

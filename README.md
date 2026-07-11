@@ -89,8 +89,12 @@ Podrobný popis zdrojů, transform skriptů a sqlite-utils vzorů: **[docs/sourc
 
 ```yaml
 site:
+    title: Název webu                  # povinné; dostupné v šabloně jako {{ site.title }}
+    description: Popis webu            # volitelné; {{ site.description }}
+    language: cs                       # volitelné; {{ site.language }}
     base_url: https://example.com
-    assets: ./assets
+    assets: ./assets                   # zdrojový adresář assets (zkopíruje se do output)
+    assets_url: /assets                # URL prefix assets v šablonách; {{ build.assets_url }}
     output: ./docs/
     paginate_by: 10
     order_by: rowid
@@ -104,11 +108,49 @@ site:
             template: index.html
         detail:
             detail: true
-            path: "/<slug>.html"
+            path: "/{{ record.slug }}.html"
+            title: "{{ record.nazev }} — Název webu"  # volitelné přetížení title pro tuto stránku
             template: detail.html
+        kategorie:
+            category: typ
+            path: "/{{ category.slug }}.html"
+            template: kategorie.html
 ```
 
-Ve všech šablonách jsou dostupné proměnné `{{ filtered }}`, `{{ tables.X }}`, `{{ docs.X }}`. Detail stránky mají navíc `{{ record }}`, stránkované stránky `{{ page }}`, `{{ total_pages }}`, `{{ prev_url }}`, `{{ next_url }}`.
+#### Kontext šablon
+
+| Proměnná | Dostupnost | Popis |
+|---|---|---|
+| `filtered` | vždy | záznamy aktuální stránky |
+| `tables.X` | vždy | všechny DB tabulky (list nebo dict dle `key`) |
+| `docs.X` | vždy | obsah dokumentů jako string |
+| `record` | detail stránka | aktuální záznam |
+| `category` | category stránka | hodnota aktuální kategorie |
+| `site.title` | vždy | název webu (přetížitelný na úrovni pages) |
+| `site.description` | vždy | popis webu |
+| `site.language` | vždy | kód jazyka (přetížitelný na úrovni pages) |
+| `site.date_format` | vždy | formátovací řetězec pro datum |
+| `site.time_format` | vždy | formátovací řetězec pro čas |
+| `site.datetime_format` | vždy | formátovací řetězec pro datum a čas |
+| `build.last_update` | vždy | `datetime` spuštění buildu |
+| `build.assets_url` | vždy | URL prefix pro assets |
+| `build.inline_css` | vždy | obsah `assets/css/style.css` (pro inline vložení) |
+| `pagination.paginated` | vždy | `True` pokud je stránkování aktivní |
+| `pagination.page` | stránkované | číslo aktuální stránky |
+| `pagination.total_pages` | stránkované | celkový počet stran |
+| `pagination.has_prev` / `has_next` | stránkované | existence sousední stránky |
+| `pagination.prev_url` / `next_url` | stránkované | URL sousední stránky nebo `None` |
+
+#### Interpolace v hodnotách `path`, `title`, `language`
+
+Hodnoty v pages configu jsou Jinja2 šablony s přístupem k `record`, `tables` a `category`:
+
+```yaml
+path: "/{{ record.slug }}.html"
+title: "{{ record.nazev }} — Valašské nebe"
+path: "/{{ category.slug }}.html"
+title: "{{ tables.typy[record.typ_slug].nazev }} — Web"  # cross-table
+```
 
 ## Workflow
 

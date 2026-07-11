@@ -1,13 +1,10 @@
 """Fetching Google Sheets and Google Docs sources for krizky."""
 
-from __future__ import annotations
-
 import subprocess
 import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -86,7 +83,7 @@ def run_transform(
     source_file: Path,
     db_path: Path,
     table_name: str,
-    output_path: Optional[Path] = None,
+    output_path: Path | None = None,
     skip_rows: int = 0,
 ) -> None:
     """Execute a bash transform script with the standard krizky arguments.

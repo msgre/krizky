@@ -40,6 +40,7 @@ def minimal_valid_config(script_path: Path) -> dict:
             "docs": {},
         },
         "site": {
+            "title": "Test Site",
             "base_url": "https://example.com",
         },
     }
@@ -128,7 +129,7 @@ def test_validate_main_true_missing() -> None:
                 "snippets": {"id": "def"},
             },
         },
-        "site": {},
+        "site": {"title": "Test Site"},
     }
     with pytest.raises(ConfigError, match="main: true"):
         validate_config(config)
@@ -147,7 +148,7 @@ def test_validate_main_true_duplicate() -> None:
                 "other": {"main": True},
             },
         },
-        "site": {},
+        "site": {"title": "Test Site"},
     }
     with pytest.raises(ConfigError, match="main: true"):
         validate_config(config)
@@ -173,7 +174,7 @@ def test_validate_docs_missing_output(tmp_path: Path) -> None:
                 },
             },
         },
-        "site": {},
+        "site": {"title": "Test Site"},
     }
     with pytest.raises(ConfigError, match="output"):
         validate_config(config)
@@ -241,7 +242,7 @@ def test_validate_docs_missing_transform(tmp_path: Path) -> None:
                 },
             },
         },
-        "site": {},
+        "site": {"title": "Test Site"},
     }
     with pytest.raises(ConfigError, match="transform"):
         validate_config(config)
@@ -255,7 +256,19 @@ def test_validate_tables_missing_transform() -> None:
                 "data": {"main": True},  # 'transform' is intentionally missing
             },
         },
-        "site": {},
+        "site": {"title": "Test Site"},
     }
     with pytest.raises(ConfigError, match="transform"):
+        validate_config(config)
+
+
+def test_validate_site_missing_title() -> None:
+    """validate_config raises ConfigError when site.title is absent."""
+    config = {
+        "sources": {
+            "tables": {"data": {"main": True}},
+        },
+        "site": {},
+    }
+    with pytest.raises(ConfigError, match="title"):
         validate_config(config)

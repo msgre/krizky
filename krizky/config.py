@@ -1,7 +1,5 @@
 """Configuration loading and validation for krizky."""
 
-from __future__ import annotations
-
 import os
 from pathlib import Path
 from typing import Any
@@ -105,6 +103,9 @@ def validate_config(config: dict, config_dir: Path | None = None) -> None:
         raise ConfigError("Missing required section 'sources' in configuration")
     if "site" not in config:
         raise ConfigError("Missing required section 'site' in configuration")
+
+    if not config["site"].get("title"):
+        raise ConfigError("Missing required attribute 'title' in 'site'")
 
     sources = config["sources"]
 

@@ -1,7 +1,5 @@
 """Click CLI entry point for krizky."""
 
-from __future__ import annotations
-
 import os
 import shutil
 from pathlib import Path
@@ -95,9 +93,21 @@ sources:
               max_width: 1600
 
 site:
+    # Human-readable site title — available in templates as {{ site.title }}.
+    title: My krizky Site
+    # Short description inserted into <meta name="description"> (optional).
+    description: A short description of this site.
+    # BCP 47 language tag used in <html lang="…"> (optional).
+    language: cs
+    # strftime format strings for use in templates (optional).
+    date_format: "%-d. %-m. %Y"
+    time_format: "%H:%M:%S"
+    datetime_format: "%-d. %-m. %Y %H:%M:%S"
     base_url: https://example.com
     # Directory with static assets (CSS, JS, fonts, images).
     assets: ./assets
+    # Base URL for assets as used in templates (e.g. /assets or https://cdn.example.com/assets).
+    assets_url: /assets
     # Output directory for generated HTML pages.
     output: ./docs/
     # Global pagination (number of records per page).
@@ -122,7 +132,8 @@ site:
 
         detail:
             detail: true
-            path: "/<slug>.html"
+            path: "/{{ record.slug }}.html"
+            title: "{{ record.nazev }} — My krizky Site"
             template: detail.html
 """
 
@@ -278,7 +289,22 @@ def build(ctx: click.Context, force: bool, dry_run: bool) -> None:
 @click.pass_context
 def build_site(ctx: click.Context, force: bool, dry_run: bool) -> None:
     """Generate HTML pages from existing database."""
-    click.echo("not implemented")
+    config_path = ctx.obj["config"]
+    try:
+        config = load_config(config_path)
+        validate_config(config, config_dir=Path(config_path).parent)
+    except ConfigError as exc:
+        click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
+        raise SystemExit(1) from None
+
+    from krizky.site import SiteError, build_site as _build_site
+    try:
+        click.echo("Building site...")
+        _build_site(config, config_dir=Path(config_path).parent)
+        click.echo(click.style("OK: Site built successfully.", fg="green"))
+    except SiteError as exc:
+        click.echo(click.style(f"ERROR: {exc}", fg="red"))
+        raise SystemExit(1) from None
 
 
 @build.command("photos")
