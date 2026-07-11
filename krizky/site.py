@@ -10,7 +10,7 @@ import jinja2
 from krizky.db import DEFAULT_ORDER_BY, DEFAULT_ORDERING, fetch_table
 from krizky.markdown import md_filter, mdtext_filter
 from krizky.pages import RenderContext, process_page
-from krizky.render import DEFAULT_PAGINATE_BY
+from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW
 
 
 class SiteError(Exception):
@@ -75,6 +75,8 @@ def _generate(
     order_by = site.get("order_by", DEFAULT_ORDER_BY)
     ordering = site.get("ordering", DEFAULT_ORDERING)
     global_paginate_by = site.get("paginate_by", DEFAULT_PAGINATE_BY)
+    pagination_window = site.get("pagination_window", DEFAULT_PAGINATION_WINDOW)
+    pagination_boundary = site.get("pagination_boundary", DEFAULT_PAGINATION_BOUNDARY)
 
     tables_cfg = sources.get("tables", {})
     main_table = next(name for name, tbl in tables_cfg.items() if tbl.get("main"))
@@ -123,6 +125,8 @@ def _generate(
                 output_dir=output_dir,
                 base_ctx=base_ctx,
                 paginate_by=paginate_by,
+                pagination_window=pagination_window,
+                pagination_boundary=pagination_boundary,
             ),
         )
 

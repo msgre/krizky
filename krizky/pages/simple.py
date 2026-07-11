@@ -20,4 +20,5 @@ def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> Non
     )
     tables = ctx.base_ctx["tables"]
     site_ctx = resolve_page_site(ctx.base_ctx["site"], page_cfg, tables=tables)
-    render_paginated(template, records, page_cfg["path"], ctx.output_dir, ctx.paginate_by, {**ctx.base_ctx, "site": site_ctx})
+    render_paginated(template, records, page_cfg["path"], ctx.output_dir, ctx.paginate_by, {**ctx.base_ctx, "site": site_ctx},
+                     window=ctx.pagination_window, boundary=ctx.pagination_boundary)

@@ -34,4 +34,5 @@ def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> Non
         render_paginated(
             template, filtered, path, ctx.output_dir, ctx.paginate_by,
             {**ctx.base_ctx, "category": cat_dict, "site": site_ctx},
+            window=ctx.pagination_window, boundary=ctx.pagination_boundary,
         )

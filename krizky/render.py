@@ -33,6 +33,30 @@ def page_path(base: str, page_num: int) -> str:
     return str(p.with_name(f"{p.stem}-{page_num}{p.suffix}"))
 
 
+DEFAULT_PAGINATION_WINDOW = 2
+DEFAULT_PAGINATION_BOUNDARY = 1
+
+
+def _pagination_pages(current: int, total: int, window: int, boundary: int) -> list:
+    """Return list of page items for pagination display.
+
+    Each item is either None (ellipsis) or a dict {"num": int, "url": str}.
+    """
+    visible: set[int] = set()
+    visible.update(range(1, min(boundary, total) + 1))
+    visible.update(range(max(total - boundary + 1, 1), total + 1))
+    visible.update(range(max(1, current - window), min(total, current + window) + 1))
+
+    result = []
+    prev = None
+    for p in sorted(visible):
+        if prev is not None and p - prev > 1:
+            result.append(None)
+        result.append(p)
+        prev = p
+    return result
+
+
 def render_paginated(
     template: jinja2.Template,
     records: list[dict],
@@ -40,6 +64,8 @@ def render_paginated(
     output_dir: Path,
     paginate_by: int,
     extra_ctx: dict,
+    window: int = DEFAULT_PAGINATION_WINDOW,
+    boundary: int = DEFAULT_PAGINATION_BOUNDARY,
 ) -> None:
     """Render *template* with optional pagination and write the resulting HTML files.
 
@@ -50,12 +76,14 @@ def render_paginated(
         output_dir: Root output directory.
         paginate_by: Records per page; 0 disables pagination.
         extra_ctx: Additional template context (tables, docs, site, …).
+        window: Pages to show around the current page.
+        boundary: Pages to always show at the start and end.
     """
     if paginate_by <= 0:
         out = output_dir / base_path.lstrip("/")
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(
-            template.render(**extra_ctx, filtered=records, pagination={"paginated": False}),
+            template.render(**extra_ctx, filtered=records, pagination={"paginated": False, "pages": []}),
             encoding="utf-8",
         )
         return
@@ -64,6 +92,10 @@ def render_paginated(
     for page_num in range(1, total_pages + 1):
         start = (page_num - 1) * paginate_by
         path = page_path(base_path, page_num)
+        pages = [
+            None if p is None else {"num": p, "url": page_path(base_path, p)}
+            for p in _pagination_pages(page_num, total_pages, window, boundary)
+        ]
         ctx = {
             **extra_ctx,
             "filtered": records[start : start + paginate_by],
@@ -75,6 +107,7 @@ def render_paginated(
                 "has_next": page_num < total_pages,
                 "prev_url": None if page_num == 1 else page_path(base_path, page_num - 1),
                 "next_url": None if page_num == total_pages else page_path(base_path, page_num + 1),
+                "pages": pages,
             },
         }
         out = output_dir / path.lstrip("/")

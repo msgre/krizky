@@ -44,6 +44,8 @@ class RenderContext:
     output_dir: Path
     base_ctx: dict
     paginate_by: int
+    pagination_window: int = 2
+    pagination_boundary: int = 1
 
 
 class PageProcessor(Protocol):
