@@ -2,6 +2,7 @@
 
 import shutil
 import sqlite3
+from datetime import date as _date
 from datetime import datetime
 from pathlib import Path
 
@@ -11,6 +12,22 @@ from krizky.db import DEFAULT_ORDER_BY, DEFAULT_ORDERING, fetch_table
 from krizky.markdown import md_filter, mdtext_filter
 from krizky.pages import RenderContext, process_page
 from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW
+
+
+def _strftime(value: object, fmt: str) -> str:
+    """Format *value* using strftime *fmt*; parses ISO strings automatically."""
+    if isinstance(value, str):
+        for pattern in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y"):
+            try:
+                value = datetime.strptime(value, pattern)
+                break
+            except ValueError:
+                continue
+        else:
+            return value  # type: ignore[return-value]
+    if isinstance(value, (datetime, _date)):
+        return value.strftime(fmt)
+    return str(value)
 
 
 class SiteError(Exception):
@@ -52,6 +69,7 @@ def build_site(config: dict, config_dir: Path) -> None:
     )
     jinja_env.filters["md"] = md_filter
     jinja_env.filters["mdtext"] = mdtext_filter
+    jinja_env.filters["strftime"] = _strftime
 
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row

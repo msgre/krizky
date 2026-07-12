@@ -100,7 +100,7 @@ def render_paginated(
             **extra_ctx,
             "filtered": records[start : start + paginate_by],
             "pagination": {
-                "paginated": True,
+                "paginated": total_pages > 1,
                 "page": page_num,
                 "total_pages": total_pages,
                 "has_prev": page_num > 1,

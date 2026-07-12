@@ -109,12 +109,27 @@ def fetch_distinct_tags(
     where_parts = [f"{_tv} IS NOT NULL", f"{_tv} != ''"]
     if condition:
         where_parts.append(f"({condition})")
+    # Fetch tag value + raw slug JSON; slug lookup done in Python because
+    # SQLite json_extract dot-path syntax breaks on keys containing '.'.
     sql = (
-        f"SELECT DISTINCT {_tv}, json_extract(t.[{slug_col}], '$.' || {_tv})"
+        f"SELECT DISTINCT {_tv}, t.[{slug_col}]"
         f" FROM [{table}] t, json_each(t.[{cat_col}]) je"
         f" WHERE {' AND '.join(where_parts)}"
     )
-    return [(row[0].strip() if row[0] else "", row[1].strip() if row[1] else "") for row in conn.execute(sql).fetchall()]
+    seen: set[str] = set()
+    result: list[tuple[str, str]] = []
+    for tag_raw, slug_json in conn.execute(sql).fetchall():
+        tag = tag_raw.strip() if tag_raw else ""
+        if not tag or tag in seen:
+            continue
+        seen.add(tag)
+        try:
+            slug_dict = json.loads(slug_json) if slug_json else {}
+            slug = slug_dict.get(tag, "").strip()
+        except (json.JSONDecodeError, AttributeError):
+            slug = ""
+        result.append((tag, slug))
+    return result
 
 
 def fetch_by_category(
