@@ -33,6 +33,7 @@ Kontext dostupný ve všech Jinja2 šablonách:
 | `pagination.*` | `paginated`, `page`, `total_pages`, `has_prev`, `has_next`, `prev_url`, `next_url` |
 | `tables.*` | všechny DB tabulky (list nebo keyed dict dle `key`) |
 | `docs.*` | obsah dokumentů jako string |
+| `query(name, **params)` | funkce; spustí pojmenovanou SQL query ze sekce `queries:` a vrátí `list[dict]`; výsledky jsou cachované per (name, params) |
 | `filtered` | záznamy aktuální stránky |
 | `record` | aktuální záznam (pouze detail stránky) |
 | `category` | hodnota aktuální kategorie jako string (pouze category stránky) |

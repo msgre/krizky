@@ -11,6 +11,7 @@ import jinja2
 from krizky.db import DEFAULT_ORDER_BY, DEFAULT_ORDERING, fetch_table
 from krizky.markdown import md_filter, mdtext_filter
 from krizky.pages import RenderContext, process_page
+from krizky.query import QueryRunner
 from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW
 
 
@@ -105,6 +106,7 @@ def _generate(
             for name, tbl in tables_cfg.items()
         },
         "docs": _load_docs(sources.get("docs", {}), sources_output),
+        "query": QueryRunner(conn, config.get("queries", {})),
         "build": {
             "last_update": datetime.now(),
             "assets_url": site.get("assets_url", ""),
