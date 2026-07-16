@@ -17,6 +17,7 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | 2    | Fetch sources                   | DONE    | [2026-07-06-02-fetch-sources.md](2026-07-06-02-fetch-sources.md) |
 | 3    | Site generation – základní typy | DONE    | [2026-07-11-01-site-generation.md](2026-07-11-01-site-generation.md) |
 | 4    | Site generation – stitky + stránkování | DONE | [2026-07-11-01-site-generation.md](2026-07-11-01-site-generation.md) · [2026-07-12-01-bugfixes-filters-templates.md](2026-07-12-01-bugfixes-filters-templates.md) |
+| —    | Queries — parameterized SQL v šablonách | DONE | [2026-07-16-01-queries.md](2026-07-16-01-queries.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 
