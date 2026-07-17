@@ -147,10 +147,16 @@ def _generate(
     # Returns has_photos=False for every row when sources.photos is not configured.
     photos_cfg = sources.get("photos")
     if photos_cfg:
+        import logging as _logging
+        _photo_log = _logging.getLogger(__name__)
         photos_dir = sources_output / "photos"
         cf_meta_path = photos_dir / "cf_metadata.json"
         fp_path = photos_dir / "focal_points.json"
+        if not cf_meta_path.exists():
+            _photo_log.warning("Photo metadata not found: %s — run 'krizky build photos' first", cf_meta_path)
         cf_meta = json.loads(cf_meta_path.read_text(encoding="utf-8")) if cf_meta_path.exists() else {}
+        if not fp_path.exists():
+            _photo_log.warning("Focal points file not found: %s — focal_point will be None for all photos", fp_path)
         focal_points = json.loads(fp_path.read_text(encoding="utf-8")) if fp_path.exists() else {}
         _photo_ctx = PhotoContext(
             cf_meta=cf_meta,

@@ -36,7 +36,7 @@ class PhotoContext:
         self._source_formats = [f for f in formats if f["format"] != "jpg"]
         self._sizes = sizes
 
-    def __call__(self, row_number: int) -> dict:
+    def __call__(self, row_number) -> dict:
         """Return photo data dict for *row_number*.
 
         Structure::
@@ -49,7 +49,7 @@ class PhotoContext:
                 "has_photos": bool,
             }
         """
-        primary_base = f"{row_number:03d}"
+        primary_base = f"{int(row_number):03d}"
         primary = self._build_photo_dict(primary_base)
 
         additional: list[dict] = []
