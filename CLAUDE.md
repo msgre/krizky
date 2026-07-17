@@ -40,6 +40,28 @@ Kontext dostupný ve všech Jinja2 šablonách:
 | `record` | aktuální záznam (pouze detail stránky) |
 | `category` | hodnota aktuální kategorie jako string (pouze category stránky) |
 
+## JSON export
+
+Každá page může volitelně generovat JSON vedle HTML. Přidej klíč `json:` do definice stránky:
+
+```yaml
+pages:
+  vsechna_mista:
+    path: /mista.html
+    template: mista.html
+    json:
+      fields: [slug, nazev, latitude, longitude]  # nebo "*" pro vše
+      exclude: [interni_pole]                      # volitelný blacklist (lze kombinovat s "*")
+      pretty: true                                 # volitelné, default false
+```
+
+- Výstup: `<output>/jsons/<stejné jméno jako HTML>.json`
+- Simple/category stránky → JSON array všech záznamů (stránkování se ignoruje)
+- Detail stránky → jeden JSON objekt per záznam
+- Bez klíče `json:` se JSON negeneruje
+
+---
+
 Interpolace v `path`, `title`, `language` config hodnotách a v `site.title`, `site.description` používá Jinja2 syntaxi:
 - `"/{{ record.slug }}.html"` — hodnota ze záznamu
 - `"/{{ category.slug }}.html"` — slug kategorie
