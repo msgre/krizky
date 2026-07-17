@@ -21,6 +21,8 @@ def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> Non
     query = page_cfg.get("query") or {}
     condition = query.get("condition")
     limit = query.get("limit")
+    order_by = query.get("order_by", ctx.order_by)
+    ordering = query.get("ordering", ctx.ordering)
     many = page_cfg.get("many", False)
 
     fetch_cats = fetch_distinct_tags if many else fetch_distinct_categories
@@ -29,7 +31,7 @@ def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> Non
     tables = ctx.base_ctx["tables"]
     json_cfg = page_cfg.get("json")
     for cat_val, cat_slug in fetch_cats(ctx.conn, ctx.main_table, cat_col, slug_col, condition):
-        filtered = fetch_recs(ctx.conn, ctx.main_table, ctx.order_by, ctx.ordering, cat_col, cat_val, condition, limit)
+        filtered = fetch_recs(ctx.conn, ctx.main_table, order_by, ordering, cat_col, cat_val, condition, limit)
         cat_dict = {"value": cat_val, "slug": cat_slug}
         path = render_config_str(page_cfg["path"], category=cat_dict, tables=tables)
         site_ctx = resolve_page_site(ctx.base_ctx["site"], page_cfg, tables=tables, category=cat_dict)

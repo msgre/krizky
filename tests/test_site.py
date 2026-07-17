@@ -155,6 +155,25 @@ def test_query_limit(tmp_path: Path) -> None:
 # test_query_condition
 # ---------------------------------------------------------------------------
 
+def test_query_order_by(tmp_path: Path) -> None:
+    """query.order_by a query.ordering přebijí globální nastavení."""
+    records = [
+        {"slug": "a", "val": "10"},
+        {"slug": "b", "val": "30"},
+        {"slug": "c", "val": "20"},
+    ]
+    config = _setup(tmp_path, records, {
+        "page": {"path": "/page.html", "template": "page.html",
+                 "query": {"order_by": "val", "ordering": "desc", "limit": 2}},
+    })
+    _make_template(tmp_path, "page.html", "{% for r in filtered %}{{ r.slug }}{% endfor %}")
+
+    build_site(config, config_dir=tmp_path)
+
+    out = (tmp_path / "output" / "page.html").read_text(encoding="utf-8")
+    assert out == "bc"  # seřazeno desc dle val: 30→b, 20→c, limit 2
+
+
 def test_query_condition(tmp_path: Path) -> None:
     """A page with query.condition filters to matching records."""
     records = [{"slug": "a", "typ": "kriz"}, {"slug": "b", "typ": "socha"}]

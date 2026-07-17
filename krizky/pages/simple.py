@@ -11,11 +11,13 @@ from krizky.render import render_paginated
 def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> None:
     """Render a page with an optional query (condition and/or limit)."""
     query = page_cfg.get("query") or {}
+    order_by = query.get("order_by", ctx.order_by)
+    ordering = query.get("ordering", ctx.ordering)
     records = fetch_records(
         ctx.conn,
         ctx.main_table,
-        ctx.order_by,
-        ctx.ordering,
+        order_by,
+        ordering,
         condition=query.get("condition"),
         limit=query.get("limit"),
     )

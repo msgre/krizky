@@ -11,7 +11,9 @@ from krizky.render import render_config_str
 def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> None:
     """Render one page for every record in the main table."""
     query = page_cfg.get("query") or {}
-    records = fetch_records(ctx.conn, ctx.main_table, ctx.order_by, ctx.ordering,
+    order_by = query.get("order_by", ctx.order_by)
+    ordering = query.get("ordering", ctx.ordering)
+    records = fetch_records(ctx.conn, ctx.main_table, order_by, ordering,
                             condition=query.get("condition"), limit=query.get("limit"))
     tables = ctx.base_ctx["tables"]
     json_cfg = page_cfg.get("json")
