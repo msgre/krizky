@@ -519,6 +519,20 @@ def test_site_object_in_template(tmp_path: Path) -> None:
     assert out == "Test Site|About us|cs"
 
 
+def test_page_name_in_context(tmp_path: Path) -> None:
+    """page_name obsahuje klíč aktuální stránky z config pages."""
+    records = [{"slug": "a"}]
+    config = _setup(tmp_path, records, {
+        "vsechna_mista": {"path": "/mista.html", "template": "page.html"},
+    })
+    _make_template(tmp_path, "page.html", "{{ page_name }}")
+
+    build_site(config, config_dir=tmp_path)
+
+    out = (tmp_path / "output" / "mista.html").read_text(encoding="utf-8")
+    assert out == "vsechna_mista"
+
+
 def test_pages_context(tmp_path: Path) -> None:
     """pages namespace maps page name to its configured path."""
     records = [{"slug": "a"}]

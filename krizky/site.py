@@ -147,7 +147,7 @@ def _generate(
                 order_by=order_by,
                 ordering=ordering,
                 output_dir=output_dir,
-                base_ctx=base_ctx,
+                base_ctx={**base_ctx, "page_name": page_name},
                 paginate_by=paginate_by,
                 pagination_window=pagination_window,
                 pagination_boundary=pagination_boundary,

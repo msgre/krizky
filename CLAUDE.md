@@ -34,6 +34,7 @@ Kontext dostupný ve všech Jinja2 šablonách:
 | `tables.*` | všechny DB tabulky (list nebo keyed dict dle `key`) |
 | `docs.*` | obsah dokumentů jako string |
 | `page_urls.*` | URL stránek dle jména z configu: `page_urls.vsechna_mista` → `"/vsechna-mista.html"` |
+| `page_name` | klíč aktuální stránky z config `pages` (např. `"vsechna_mista"`) |
 | `query(name, **params)` | funkce; spustí pojmenovanou SQL query ze sekce `queries:` a vrátí `list[dict]`; výsledky jsou cachované per (name, params) |
 | `filtered` | záznamy aktuální stránky |
 | `record` | aktuální záznam (pouze detail stránky) |
