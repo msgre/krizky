@@ -167,6 +167,7 @@ def _get_r2_client(photos_cfg: dict):
         endpoint_url=endpoint,
         aws_access_key_id=dest["access_key_id"],
         aws_secret_access_key=dest["secret_access_key"],
+        region_name="auto",
     )
 
 
