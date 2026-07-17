@@ -140,12 +140,13 @@ def _get_drive_service(photos_cfg: dict, config_dir: Path):
 
     try:
         key_data = json.loads(account_key)
-        creds = Credentials.from_service_account_info(key_data, scopes=scopes)
-    except (json.JSONDecodeError, ValueError):
+    except json.JSONDecodeError:
         key_path = Path(account_key)
         if not key_path.is_absolute():
             key_path = (config_dir / account_key).resolve()
         creds = Credentials.from_service_account_file(str(key_path), scopes=scopes)
+    else:
+        creds = Credentials.from_service_account_info(key_data, scopes=scopes)
 
     return build("drive", "v3", credentials=creds)
 
