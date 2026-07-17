@@ -41,6 +41,73 @@ Kontext dostupný ve všech Jinja2 šablonách:
 | `record` | aktuální záznam (pouze detail stránky) |
 | `category` | hodnota aktuální kategorie jako string (pouze category stránky) |
 
+## Fotky v šablonách
+
+Dostupné jen pokud je v configu sekce `sources.photos`. Metadata se načítají z `sources/photos/cf_metadata.json` a `sources/photos/focal_points.json`.
+
+### `photos(row_number)` → photo container
+
+```jinja2
+{% set imgs = photos(record.row_number) %}
+{{ imgs.has_photos }}    {# bool #}
+{{ imgs.count }}         {# celkový počet fotek pro tento záznam #}
+{{ imgs.primary }}       {# photo dict nebo None #}
+{{ imgs.additional }}    {# list photo dictů (007-1, 007-2, …) #}
+{{ imgs.all }}           {# [primary] + additional #}
+```
+
+### Struktura photo dictu
+
+```
+photo.base_name      → "007" nebo "007-1"
+photo.src            → "https://cdn.example.com/007_big.jpg"   (největší JPEG varianta)
+photo.srcset         → "https://.../007_micro.jpg 150w, ..., 007_big.jpg 1600w"
+photo.sources        → [{mime: "image/avif", srcset: "..."}, {mime: "image/webp", srcset: "..."}]
+photo.variants       → {"micro": {url, w, h}, "thumb": {url, w, h}, "big": {url, w, h}, …}
+photo.width          → int (šířka největší varianty)
+photo.height         → int (výška největší varianty)
+photo.focal_point    → "50% 46%" nebo None  (CSS hodnota pro object-position)
+```
+
+### `_picture.html` — built-in makro
+
+```jinja2
+{% from "_picture.html" import picture %}
+
+{# základní použití #}
+{{ picture(imgs.primary, sizes="(max-width:520px) 100vw, 330px", alt=record.nazev) }}
+
+{# s výběrem velikostní varianty pro src hint (lepší LCP) #}
+{{ picture(imgs.primary, sizes="650px", alt=record.nazev, size="medium", lazy=False) }}
+
+{# galerie #}
+{% for photo in imgs.all %}
+  {{ picture(photo, sizes="76px", alt=record.nazev, size="micro") }}
+{% endfor %}
+```
+
+Parametry makra:
+
+| Parametr | Výchozí | Popis |
+|---|---|---|
+| `photo` | — | photo dict z `photos(row_number)` |
+| `sizes` | `"100vw"` | CSS `sizes` atribut — přizpůsob každému kontextu |
+| `alt` | `""` | alt text pro `<img>` |
+| `lazy` | `True` | `True` → `loading="lazy"`, `False` → `fetchpriority="high"` (hero) |
+| `size` | `None` | název varianty pro `src` + `width`/`height` hint (např. `"thumb"`, `"medium"`) |
+
+Makro generuje `<source>` pro každý non-JPEG formát (AVIF, WebP) + `<img>` s JPEG srcset jako fallback. Pokud je `focal_point` nastaven, přidá `style="object-position:..."`.
+
+### Kde se berou data
+
+| Soubor | Kdo spravuje | Obsah |
+|---|---|---|
+| `sources/photos/gdrive_metadata.json` | `krizky fetch photos` | seznam fotek na GDrive |
+| `sources/photos/cf_metadata.json` | `krizky build photos` | rozměry variant + `_last_modified` |
+| `sources/photos/focal_points.json` | ručně | `{"007": "50% 46%", …}` |
+
+---
+
 ## JSON export
 
 Každá page může volitelně generovat JSON vedle HTML. Přidej klíč `json:` do definice stránky:
