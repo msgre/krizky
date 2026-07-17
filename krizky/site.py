@@ -1,5 +1,6 @@
 """Site generation orchestration for krizky."""
 
+import json
 import shutil
 import sqlite3
 from datetime import date as _date
@@ -11,8 +12,11 @@ import jinja2
 from krizky.db import DEFAULT_ORDER_BY, DEFAULT_ORDERING, fetch_table
 from krizky.markdown import md_filter, mdtext_filter
 from krizky.pages import RenderContext, process_page
+from krizky.photo_context import PhotoContext
 from krizky.query import QueryRunner
 from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW, render_config_str
+
+_BUILTIN_TEMPLATES = Path(__file__).parent / "templates"
 
 
 def _strftime(value: object, fmt: str) -> str:
@@ -64,7 +68,10 @@ def build_site(config: dict, config_dir: Path) -> None:
         raise SiteError(f"Templates directory not found: {templates_dir}")
 
     jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(str(templates_dir)),
+        loader=jinja2.ChoiceLoader([
+            jinja2.FileSystemLoader(str(templates_dir)),
+            jinja2.FileSystemLoader(str(_BUILTIN_TEMPLATES)),
+        ]),
         autoescape=jinja2.select_autoescape(["html"]),
         keep_trailing_newline=True,
     )
@@ -108,7 +115,7 @@ def _generate(
     docs_ctx = _load_docs(sources.get("docs", {}), sources_output)
     _site_render_ctx = {"tables": tables_ctx, "docs": docs_ctx}
 
-    base_ctx = {
+    base_ctx: dict = {
         "tables": tables_ctx,
         "docs": docs_ctx,
         "query": QueryRunner(conn, config.get("queries", {})),
@@ -130,6 +137,23 @@ def _generate(
             "datetime_format": site.get("datetime_format", "%-d. %-m. %Y %H:%M:%S"),
         },
     }
+
+
+    # Optional photo context — only when sources.photos is configured.
+    photos_cfg = sources.get("photos")
+    if photos_cfg:
+        photos_dir = sources_output / "photos"
+        cf_meta_path = photos_dir / "cf_metadata.json"
+        fp_path = photos_dir / "focal_points.json"
+        cf_meta = json.loads(cf_meta_path.read_text(encoding="utf-8")) if cf_meta_path.exists() else {}
+        focal_points = json.loads(fp_path.read_text(encoding="utf-8")) if fp_path.exists() else {}
+        base_ctx["photos"] = PhotoContext(
+            cf_meta=cf_meta,
+            focal_points=focal_points,
+            base_url=photos_cfg.get("base_url", ""),
+            formats=photos_cfg.get("formats", []),
+            sizes=photos_cfg.get("sizes", []),
+        )
 
     _copy_assets(site, config_dir, output_dir)
 

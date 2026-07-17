@@ -265,8 +265,22 @@ def fetch_sources(ctx: click.Context, transform: bool) -> None:
 @fetch.command("photos")
 @click.pass_context
 def fetch_photos(ctx: click.Context) -> None:
-    """Download photo metadata from Google Drive and Cloudflare."""
-    click.echo("not implemented")
+    """Fetch photo file list from Google Drive and save to sources/photos/gdrive_metadata.json."""
+    config_path: str = ctx.obj["config"]
+    try:
+        config = load_config(config_path)
+    except ConfigError as exc:
+        click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
+        raise SystemExit(1) from None
+
+    from krizky.fetch import FetchError, fetch_gdrive_metadata
+    try:
+        click.echo("Fetching Google Drive photo metadata...")
+        meta = fetch_gdrive_metadata(config, config_dir=Path(config_path).parent)
+        click.echo(click.style(f"OK: Fetched metadata for {len(meta)} photos.", fg="green"))
+    except FetchError as exc:
+        click.echo(click.style(f"ERROR: {exc}", fg="red"))
+        raise SystemExit(1) from None
 
 
 # ---------------------------------------------------------------------------
@@ -308,9 +322,23 @@ def build_site(ctx: click.Context, force: bool, dry_run: bool) -> None:
 
 
 @build.command("photos")
-@click.option("--force", is_flag=True, default=False, help="Skip change detection, force full rebuild.")
-@click.option("--dry-run", is_flag=True, default=False, help="Show what would happen without doing it.")
+@click.option("--force", is_flag=True, default=False, help="Reprocess all photos, ignore change detection.")
+@click.option("--dry-run", is_flag=True, default=False, help="Show what would happen without downloading or uploading.")
 @click.pass_context
 def build_photos(ctx: click.Context, force: bool, dry_run: bool) -> None:
-    """Process and upload photos."""
-    click.echo("not implemented")
+    """Process changed photos and upload variants to Cloudflare R2."""
+    config_path: str = ctx.obj["config"]
+    try:
+        config = load_config(config_path)
+    except ConfigError as exc:
+        click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
+        raise SystemExit(1) from None
+
+    from krizky.build_photos import PhotoError, build_photos as _build_photos
+    try:
+        click.echo("Building photos...")
+        _build_photos(config, config_dir=Path(config_path).parent, force=force, dry_run=dry_run)
+        click.echo(click.style("OK: Photos processed successfully.", fg="green"))
+    except PhotoError as exc:
+        click.echo(click.style(f"ERROR: {exc}", fg="red"))
+        raise SystemExit(1) from None

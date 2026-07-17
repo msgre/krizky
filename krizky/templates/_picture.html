@@ -1,0 +1,44 @@
+{# _picture.html — built-in krizky macro for generating <picture> elements.
+
+   Import in your template:
+     {% from "_picture.html" import picture %}
+
+   Usage:
+     {% set imgs = photos(record.row_number) %}
+     {% if imgs.has_photos %}
+       {{ picture(imgs.primary, sizes="(max-width:520px) 100vw, 330px", alt=record.nazev, size="thumb") }}
+     {% endif %}
+
+   Parameters:
+     photo  — photo dict from photos(row_number).primary / .additional[n]
+     sizes  — CSS sizes attribute value (required for correct responsive behaviour)
+     alt    — alt text for the <img> element (default: empty string)
+     lazy   — True → loading="lazy" decoding="async" (default)
+              False → fetchpriority="high" decoding="async" (use for above-the-fold hero)
+     size   — name of the variant to use as <img src> and width/height hint
+              (e.g. "thumb", "medium"); defaults to the largest available variant
+#}
+{% macro picture(photo, sizes="100vw", alt="", lazy=True, size=None) -%}
+{%- set ns = namespace(src=photo.src, w=photo.width, h=photo.height) %}
+{%- if size and size in photo.variants %}
+{%- set ns.src = photo.variants[size].url %}
+{%- set ns.w   = photo.variants[size].w %}
+{%- set ns.h   = photo.variants[size].h %}
+{%- endif %}
+<picture>
+  {%- for s in photo.sources %}
+  <source srcset="{{ s.srcset }}" sizes="{{ sizes }}" type="{{ s.mime }}">
+  {%- endfor %}
+  <img
+    src="{{ ns.src }}"
+    srcset="{{ photo.srcset }}"
+    sizes="{{ sizes }}"
+    width="{{ ns.w }}"
+    height="{{ ns.h }}"
+    alt="{{ alt }}"
+    {%- if lazy %} loading="lazy" decoding="async"
+    {%- else %} fetchpriority="high" decoding="async"
+    {%- endif %}
+    {%- if photo.focal_point %} style="object-position:{{ photo.focal_point }}"{% endif %}>
+</picture>
+{%- endmacro %}

@@ -36,6 +36,7 @@ Kontext dostupný ve všech Jinja2 šablonách:
 | `page_urls.*` | URL stránek dle jména z configu: `page_urls.vsechna_mista` → `"/vsechna-mista.html"` |
 | `page_name` | klíč aktuální stránky z config `pages` (např. `"vsechna_mista"`) |
 | `query(name, **params)` | funkce; spustí pojmenovanou SQL query ze sekce `queries:` a vrátí `list[dict]`; výsledky jsou cachované per (name, params) |
+| `photos(row_number)` | funkce; vrátí `{primary, additional, all, count, has_photos}` — photo dict pro `<picture>` makro; dostupné jen pokud je v configu sekce `sources.photos` |
 | `filtered` | záznamy aktuální stránky |
 | `record` | aktuální záznam (pouze detail stránky) |
 | `category` | hodnota aktuální kategorie jako string (pouze category stránky) |
