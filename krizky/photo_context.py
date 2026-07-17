@@ -8,6 +8,8 @@ No external dependencies — works purely from the committed JSON metadata.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 
 class PhotoContext:
     """Callable that returns photo data for a given row number.
@@ -30,7 +32,8 @@ class PhotoContext:
         sizes: list[dict],
     ) -> None:
         self._cf_meta = cf_meta
-        self._focal_points = focal_points
+        # Normalize focal_points keys: strip file extension if present ("047.jpg" → "047").
+        self._focal_points = {Path(k).stem: v for k, v in focal_points.items()}
         self._base_url = base_url.rstrip("/")
         # Only non-JPEG formats go into <source> elements; JPEG is the <img> fallback.
         self._source_formats = [f for f in formats if f["format"] != "jpg"]
