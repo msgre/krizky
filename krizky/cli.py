@@ -1,5 +1,6 @@
 """Click CLI entry point for krizky."""
 
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -7,6 +8,8 @@ from pathlib import Path
 import click
 
 from krizky.config import ConfigError, load_config, validate_config
+
+logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
 
 
 # ---------------------------------------------------------------------------
@@ -300,9 +303,13 @@ def build(ctx: click.Context, force: bool, dry_run: bool) -> None:
 @build.command("site")
 @click.option("--force", is_flag=True, default=False, help="Skip change detection, force full rebuild.")
 @click.option("--dry-run", is_flag=True, default=False, help="Show what would happen without doing it.")
+@click.option("--verbose", "-v", is_flag=True, default=False, help="Show debug info (resolved paths, loaded files, …).")
 @click.pass_context
-def build_site(ctx: click.Context, force: bool, dry_run: bool) -> None:
+def build_site(ctx: click.Context, force: bool, dry_run: bool, verbose: bool) -> None:
     """Generate HTML pages from existing database."""
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
     config_path = ctx.obj["config"]
     try:
         config = load_config(config_path)
@@ -310,6 +317,16 @@ def build_site(ctx: click.Context, force: bool, dry_run: bool) -> None:
     except ConfigError as exc:
         click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
         raise SystemExit(1) from None
+
+    if verbose:
+        config_dir = Path(config_path).parent
+        sources_output = (config_dir / config["sources"]["output"]).resolve()
+        photos_dir = sources_output / "photos"
+        click.echo(f"  config dir:      {config_dir}")
+        click.echo(f"  sources output:  {sources_output}")
+        click.echo(f"  photos dir:      {photos_dir}")
+        click.echo(f"  cf_metadata:     {photos_dir / 'cf_metadata.json'} {'✓' if (photos_dir / 'cf_metadata.json').exists() else '✗ MISSING'}")
+        click.echo(f"  focal_points:    {photos_dir / 'focal_points.json'} {'✓' if (photos_dir / 'focal_points.json').exists() else '✗ MISSING'}")
 
     from krizky.site import SiteError, build_site as _build_site
     try:
