@@ -142,7 +142,8 @@ def _generate(
     }
 
 
-    # Optional photo context — only when sources.photos is configured.
+    # Photo context — always present so templates can call photos(row) unconditionally.
+    # Returns has_photos=False for every row when sources.photos is not configured.
     photos_cfg = sources.get("photos")
     if photos_cfg:
         photos_dir = sources_output / "photos"
@@ -157,6 +158,8 @@ def _generate(
             formats=photos_cfg.get("formats", []),
             sizes=photos_cfg.get("sizes", []),
         )
+    else:
+        base_ctx["photos"] = PhotoContext(cf_meta={}, focal_points={}, base_url="", formats=[], sizes=[])
 
     _copy_assets(site, config_dir, output_dir)
 
