@@ -526,7 +526,7 @@ def test_pages_context(tmp_path: Path) -> None:
         "home":  {"path": "/index.html",        "template": "page.html"},
         "mista": {"path": "/vsechna-mista.html", "template": "page.html"},
     })
-    _make_template(tmp_path, "page.html", "{{ pages.home }}|{{ pages.mista }}")
+    _make_template(tmp_path, "page.html", "{{ page_urls.home }}|{{ page_urls.mista }}")
 
     build_site(config, config_dir=tmp_path)
 
