@@ -519,6 +519,21 @@ def test_site_object_in_template(tmp_path: Path) -> None:
     assert out == "Test Site|About us|cs"
 
 
+def test_pages_context(tmp_path: Path) -> None:
+    """pages namespace maps page name to its configured path."""
+    records = [{"slug": "a"}]
+    config = _setup(tmp_path, records, {
+        "home":  {"path": "/index.html",        "template": "page.html"},
+        "mista": {"path": "/vsechna-mista.html", "template": "page.html"},
+    })
+    _make_template(tmp_path, "page.html", "{{ pages.home }}|{{ pages.mista }}")
+
+    build_site(config, config_dir=tmp_path)
+
+    out = (tmp_path / "output" / "index.html").read_text(encoding="utf-8")
+    assert out == "/index.html|/vsechna-mista.html"
+
+
 def test_site_title_page_override(tmp_path: Path) -> None:
     """Page-level title is available as site.page_title; site.title stays global."""
     records = [{"slug": "a"}]

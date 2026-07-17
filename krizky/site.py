@@ -107,6 +107,10 @@ def _generate(
         },
         "docs": _load_docs(sources.get("docs", {}), sources_output),
         "query": QueryRunner(conn, config.get("queries", {})),
+        "pages": {
+            name: cfg.get("path", "")
+            for name, cfg in site.get("pages", {}).items()
+        },
         "build": {
             "last_update": datetime.now(),
             "assets_url": site.get("assets_url", ""),
