@@ -17,19 +17,35 @@ def resolve_page_site(
     tables: dict | None = None,
     category: dict | None = None,
 ) -> dict:
-    """Return site dict with page-level title/language overrides applied.
+    """Return site dict extended with page-level title and description.
 
-    Values are rendered as Jinja2 templates with access to record, tables, category.
+    ``site.title`` and ``site.description`` always carry the global site values.
+    Per-page values (rendered as Jinja2 templates) are stored in
+    ``site.page_title`` and ``site.page_description``; they fall back to the
+    global values when no page-level key is defined or the rendered value is empty.
+
+    ``site.language`` is still overridable at the page level.
     """
     resolved = dict(site)
     ctx: dict = {"record": record or {}, "tables": tables or {}}
     if category is not None:
         ctx["category"] = category
-    for key in ("title", "description", "language"):
+
+    # language: still overridable at page level
+    if "language" in page_cfg:
+        value = render_config_str(page_cfg["language"], **ctx).strip()
+        if value:
+            resolved["language"] = value
+
+    # title / description: global values are preserved; page-level resolved
+    # values are delivered as page_title / page_description
+    for key, page_key in (("title", "page_title"), ("description", "page_description")):
         if key in page_cfg:
             value = render_config_str(page_cfg[key], **ctx).strip()
-            if value:
-                resolved[key] = value
+            resolved[page_key] = value if value else site.get(key, "")
+        else:
+            resolved[page_key] = site.get(key, "")
+
     return resolved
 
 

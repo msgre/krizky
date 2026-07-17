@@ -28,7 +28,7 @@ Kontext dostupný ve všech Jinja2 šablonách:
 
 | Namespace | Obsah |
 |---|---|
-| `site.*` | config: `title`, `description`, `language`, `date_format`, `time_format`, `datetime_format` |
+| `site.*` | config: `title`, `description`, `language`, `date_format`, `time_format`, `datetime_format`; plus `page_title` a `page_description` (hodnoty z page config nebo fallback na globální) |
 | `build.*` | build-time: `last_update` (datetime), `assets_url`, `inline_css` |
 | `pagination.*` | `paginated`, `page`, `total_pages`, `has_prev`, `has_next`, `prev_url`, `next_url` |
 | `tables.*` | všechny DB tabulky (list nebo keyed dict dle `key`) |

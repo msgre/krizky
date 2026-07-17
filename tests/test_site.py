@@ -520,31 +520,45 @@ def test_site_object_in_template(tmp_path: Path) -> None:
 
 
 def test_site_title_page_override(tmp_path: Path) -> None:
-    """Page-level title overrides site.title in the template context."""
+    """Page-level title is available as site.page_title; site.title stays global."""
     records = [{"slug": "a"}]
     config = _setup(tmp_path, records, {
         "all": {"path": "/all.html", "template": "all.html", "title": "Page Title"},
     })
-    _make_template(tmp_path, "all.html", "{{ site.title }}")
+    _make_template(tmp_path, "all.html", "{{ site.page_title }}|{{ site.title }}")
 
     build_site(config, config_dir=tmp_path)
 
     out = (tmp_path / "output" / "all.html").read_text(encoding="utf-8")
-    assert out == "Page Title"
+    assert out == "Page Title|Test Site"
+
+
+def test_site_page_title_fallback(tmp_path: Path) -> None:
+    """site.page_title falls back to site.title when no page-level title is defined."""
+    records = [{"slug": "a"}]
+    config = _setup(tmp_path, records, {
+        "all": {"path": "/all.html", "template": "all.html"},
+    })
+    _make_template(tmp_path, "all.html", "{{ site.page_title }}")
+
+    build_site(config, config_dir=tmp_path)
+
+    out = (tmp_path / "output" / "all.html").read_text(encoding="utf-8")
+    assert out == "Test Site"
 
 
 def test_site_title_detail_substitution(tmp_path: Path) -> None:
-    """Page-level title with {{ record.col }} placeholder is substituted per record."""
+    """site.page_title is substituted per record on detail pages; site.title stays global."""
     records = [{"slug": "prvni", "name": "První záznam"}, {"slug": "druhy", "name": "Druhý záznam"}]
     config = _setup(tmp_path, records, {
         "detail": {"detail": True, "path": "/{{ record.slug }}.html", "template": "detail.html", "title": "Detail: {{ record.name }}"},
     })
-    _make_template(tmp_path, "detail.html", "{{ site.title }}")
+    _make_template(tmp_path, "detail.html", "{{ site.page_title }}|{{ site.title }}")
 
     build_site(config, config_dir=tmp_path)
 
-    assert (tmp_path / "output" / "prvni.html").read_text(encoding="utf-8") == "Detail: První záznam"
-    assert (tmp_path / "output" / "druhy.html").read_text(encoding="utf-8") == "Detail: Druhý záznam"
+    assert (tmp_path / "output" / "prvni.html").read_text(encoding="utf-8") == "Detail: První záznam|Test Site"
+    assert (tmp_path / "output" / "druhy.html").read_text(encoding="utf-8") == "Detail: Druhý záznam|Test Site"
 
 
 def test_site_language_page_override(tmp_path: Path) -> None:
@@ -562,7 +576,7 @@ def test_site_language_page_override(tmp_path: Path) -> None:
 
 
 def test_site_description_page_override(tmp_path: Path) -> None:
-    """Page-level description overrides site.description; empty value falls back to site."""
+    """Page-level description is in site.page_description; empty value falls back to site.description."""
     records = [
         {"slug": "a", "popis": "Popis záznamu"},
         {"slug": "b", "popis": ""},   # prázdný → fallback na site
@@ -570,12 +584,12 @@ def test_site_description_page_override(tmp_path: Path) -> None:
     config = _setup(tmp_path, records, {
         "detail": {"detail": True, "path": "/{{ record.slug }}.html", "template": "detail.html", "description": "{{ record.popis }}"},
     }, extra_site={"description": "Výchozí popis"})
-    _make_template(tmp_path, "detail.html", "{{ site.description }}")
+    _make_template(tmp_path, "detail.html", "{{ site.page_description }}|{{ site.description }}")
 
     build_site(config, config_dir=tmp_path)
 
-    assert (tmp_path / "output" / "a.html").read_text(encoding="utf-8") == "Popis záznamu"
-    assert (tmp_path / "output" / "b.html").read_text(encoding="utf-8") == "Výchozí popis"
+    assert (tmp_path / "output" / "a.html").read_text(encoding="utf-8") == "Popis záznamu|Výchozí popis"
+    assert (tmp_path / "output" / "b.html").read_text(encoding="utf-8") == "Výchozí popis|Výchozí popis"
 
 
 def test_site_description_optional(tmp_path: Path) -> None:
