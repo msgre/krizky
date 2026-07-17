@@ -54,7 +54,11 @@ def fetch_records(
     sql = f"SELECT * FROM [{table}]"
     if condition:
         sql += f" WHERE ({condition})"
-    sql += f" ORDER BY {order_by} {ordering.upper()}"
+    # If order_by contains a comma or explicit direction keyword, use it verbatim.
+    if "," in order_by or " " in order_by.strip():
+        sql += f" ORDER BY {order_by}"
+    else:
+        sql += f" ORDER BY {order_by} {ordering.upper()}"
     if limit:
         sql += f" LIMIT {limit}"
     return [parse_row(dict(r)) for r in conn.execute(sql).fetchall()]
