@@ -3,40 +3,61 @@
    Import in your template:
      {% from "_picture.html" import picture %}
 
-   Usage:
-     {% set imgs = photos(record.row_number) %}
-     {% if imgs.has_photos %}
-       {{ picture(imgs.primary, sizes="(max-width:520px) 100vw, 330px", alt=record.nazev, size="thumb") }}
-     {% endif %}
+   Usage with a named context (preferred — sizes and src come from config):
+     {{ picture(imgs.primary, "card", alt=record.nazev) }}
+     {{ picture(imgs.primary, "detail", alt=record.nazev) }}
+
+   Usage with explicit overrides:
+     {{ picture(imgs.primary, alt=record.nazev, size="thumb", sizes="330px") }}
 
    Parameters:
-     photo  — photo dict from photos(row_number).primary / .additional[n]
-     sizes  — CSS sizes attribute value (required for correct responsive behaviour)
-     alt    — alt text for the <img> element (default: empty string)
-     lazy   — True → loading="lazy" decoding="async" (default)
-              False → fetchpriority="high" decoding="async" (use for above-the-fold hero)
-     size   — name of the variant to use as <img src> and width/height hint
-              (e.g. "thumb", "medium"); defaults to the largest available variant
+     photo    — photo dict from photos(row_number).primary / .all[n]
+     context  — name of a context defined in sources.photos.contexts (optional)
+     alt      — alt text for <img> (default: empty string)
+     lazy     — True → loading="lazy" (default)
+                False → fetchpriority="high" (above-the-fold hero image)
+                Overrides the context's lazy setting when provided.
+     size     — variant name for <img src> fallback, e.g. "thumb", "medium"
+                Overrides the context's src setting when provided.
+     sizes    — CSS sizes attribute value
+                Overrides the context's sizes setting when provided.
+
+   Config example (sources.photos.contexts):
+     contexts:
+       card:
+         src: thumb
+         sizes: "(max-width:520px) calc(100vw - 48px), (max-width:760px) calc(50vw - 36px), calc(25vw - 30px)"
+       detail:
+         src: medium
+         sizes: "(max-width:860px) calc(100vw - 48px), 650px"
+         lazy: false
+
+   Note: width and height on <img> always reflect the largest available variant
+   (for correct aspect-ratio reservation by the browser), regardless of which
+   variant is used as src.
 #}
-{% macro picture(photo, sizes="100vw", alt="", lazy=True, size=None) -%}
-{%- set ns = namespace(src=photo.src, w=photo.width, h=photo.height) %}
-{%- if size and size in photo.variants %}
-{%- set ns.src = photo.variants[size].url %}
-{%- set ns.w   = photo.variants[size].w %}
-{%- set ns.h   = photo.variants[size].h %}
+{% macro picture(photo, context=none, alt="", lazy=none, size=none, sizes=none) -%}
+{%- if context and photo_contexts is defined and context in photo_contexts %}
+{%- set _ctx = photo_contexts[context] %}
+{%- else %}
+{%- set _ctx = {} %}
 {%- endif %}
+{%- set _size  = size  if size  is not none else _ctx.get("src") %}
+{%- set _sizes = sizes if sizes is not none else (_ctx.get("sizes") or "100vw") %}
+{%- set _lazy  = lazy  if lazy  is not none else _ctx.get("lazy", true) %}
+{%- set _src   = photo.variants[_size].url if (_size and _size in photo.variants) else photo.src %}
 <picture>
   {%- for s in photo.sources %}
-  <source srcset="{{ s.srcset }}" sizes="{{ sizes }}" type="{{ s.mime }}">
+  <source srcset="{{ s.srcset }}" sizes="{{ _sizes }}" type="{{ s.mime }}">
   {%- endfor %}
   <img
-    src="{{ ns.src }}"
+    src="{{ _src }}"
     srcset="{{ photo.srcset }}"
-    sizes="{{ sizes }}"
-    width="{{ ns.w }}"
-    height="{{ ns.h }}"
+    sizes="{{ _sizes }}"
+    width="{{ photo.width }}"
+    height="{{ photo.height }}"
     alt="{{ alt }}"
-    {%- if lazy %} loading="lazy" decoding="async"
+    {%- if _lazy %} loading="lazy" decoding="async"
     {%- else %} fetchpriority="high" decoding="async"
     {%- endif %}
     {%- if photo.focal_point %} style="object-position:{{ photo.focal_point }}"{% endif %}>

@@ -79,6 +79,9 @@ def build_site(config: dict, config_dir: Path) -> None:
     jinja_env.filters["mdtext"] = mdtext_filter
     jinja_env.filters["strftime"] = _strftime
 
+    photos_src = config.get("sources", {}).get("photos")
+    jinja_env.globals["photo_contexts"] = photos_src.get("contexts", {}) if photos_src else {}
+
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     try:

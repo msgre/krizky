@@ -71,18 +71,41 @@ photo.focal_point    → "50% 46%" nebo None  (CSS hodnota pro object-position)
 
 ### `_picture.html` — built-in makro
 
+Doporučený způsob: pojmenované kontexty v configu, šablona jen uvede jméno kontextu.
+
+**Config** (`sources.photos.contexts`):
+```yaml
+sources:
+  photos:
+    contexts:
+      card:
+        src: thumb
+        sizes: "(max-width:520px) calc(100vw - 48px), (max-width:760px) calc(50vw - 36px), calc(25vw - 30px)"
+      detail:
+        src: medium
+        sizes: "(max-width:860px) calc(100vw - 48px), 650px"
+        lazy: false   # hero — fetchpriority="high"
+      micro:
+        src: micro
+        sizes: "76px"
+```
+
+**Šablona**:
 ```jinja2
 {% from "_picture.html" import picture %}
+{% set imgs = photos(record.row_number) %}
 
-{# základní použití #}
-{{ picture(imgs.primary, sizes="(max-width:520px) 100vw, 330px", alt=record.nazev) }}
+{# karta — context řeší vše #}
+{% if imgs.has_photos %}
+  {{ picture(imgs.primary, "card", alt=record.nazev) }}
+{% endif %}
 
-{# s výběrem velikostní varianty pro src hint (lepší LCP) #}
-{{ picture(imgs.primary, sizes="650px", alt=record.nazev, size="medium", lazy=False) }}
+{# detail hero #}
+{{ picture(imgs.primary, "detail", alt=record.nazev) }}
 
 {# galerie #}
 {% for photo in imgs.all %}
-  {{ picture(photo, sizes="76px", alt=record.nazev, size="micro") }}
+  {{ picture(photo, "micro", alt=record.nazev) }}
 {% endfor %}
 ```
 
@@ -91,12 +114,13 @@ Parametry makra:
 | Parametr | Výchozí | Popis |
 |---|---|---|
 | `photo` | — | photo dict z `photos(row_number)` |
-| `sizes` | `"100vw"` | CSS `sizes` atribut — přizpůsob každému kontextu |
+| `context` | `none` | jméno kontextu z `sources.photos.contexts` |
 | `alt` | `""` | alt text pro `<img>` |
-| `lazy` | `True` | `True` → `loading="lazy"`, `False` → `fetchpriority="high"` (hero) |
-| `size` | `None` | název varianty pro `src` + `width`/`height` hint (např. `"thumb"`, `"medium"`) |
+| `lazy` | `none` | přebije `lazy` z kontextu; `false` → `fetchpriority="high"` |
+| `size` | `none` | přebije `src` z kontextu — varianta pro `<img src>` |
+| `sizes` | `none` | přebije `sizes` z kontextu — CSS sizes atribut |
 
-Makro generuje `<source>` pro každý non-JPEG formát (AVIF, WebP) + `<img>` s JPEG srcset jako fallback. Pokud je `focal_point` nastaven, přidá `style="object-position:..."`.
+`width` a `height` na `<img>` jsou vždy z největší dostupné varianty (pro správnou rezervaci aspect ratio prohlížečem), bez ohledu na `size`/context `src`. Makro generuje `<source>` pro AVIF a WebP + `<img>` s JPEG srcset jako fallback.
 
 ### Kde se berou data
 
