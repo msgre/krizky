@@ -40,7 +40,8 @@ Kontext dostupný ve všech Jinja2 šablonách:
 | `record` | aktuální záznam (pouze detail stránky) |
 | `category` | hodnota aktuální kategorie jako string (pouze category stránky) |
 
-Interpolace v `path`, `title`, `language` config hodnotách používá Jinja2 syntaxi:
+Interpolace v `path`, `title`, `language` config hodnotách a v `site.title`, `site.description` používá Jinja2 syntaxi:
 - `"/{{ record.slug }}.html"` — hodnota ze záznamu
 - `"/{{ category.slug }}.html"` — slug kategorie
 - `"{{ tables.typy[record.typ_slug].nazev }}"` — cross-table lookup
+- `"{{ tables.konfig.nazev.hodnota }}"` — v `site.title`/`site.description` dostupné `tables` a `docs`

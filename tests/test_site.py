@@ -505,6 +505,36 @@ def test_build_last_update_in_template(tmp_path: Path) -> None:
 # test_site_context
 # ---------------------------------------------------------------------------
 
+def test_site_title_jinja2_from_table(tmp_path: Path) -> None:
+    """site.title a site.description mohou být Jinja2 šablony odkazující na tables."""
+    records = [{"slug": "a", "nazev": "Valašské nebe", "popis": "Popis webu"}]
+    sources_dir = tmp_path / "sources"
+    sources_dir.mkdir(exist_ok=True)
+    _make_db(sources_dir / "data.db", records)
+    (tmp_path / "templates").mkdir(exist_ok=True)
+    (tmp_path / "output").mkdir(exist_ok=True)
+    config = {
+        "sources": {
+            "output": str(sources_dir),
+            "database": "data.db",
+            "tables": {"data": {"main": True, "key": "slug"}},
+        },
+        "site": {
+            "title": "{{ tables.data.a.nazev }}",
+            "description": "{{ tables.data.a.popis }}",
+            "output": str(tmp_path / "output"),
+            "templates": str(tmp_path / "templates"),
+            "pages": {"all": {"path": "/all.html", "template": "all.html"}},
+        },
+    }
+    _make_template(tmp_path, "all.html", "{{ site.title }}|{{ site.description }}")
+
+    build_site(config, config_dir=tmp_path)
+
+    out = (tmp_path / "output" / "all.html").read_text(encoding="utf-8")
+    assert out == "Valašské nebe|Popis webu"
+
+
 def test_site_object_in_template(tmp_path: Path) -> None:
     """site.title, site.description and site.language are available in templates."""
     records = [{"slug": "a"}]

@@ -12,7 +12,7 @@ from krizky.db import DEFAULT_ORDER_BY, DEFAULT_ORDERING, fetch_table
 from krizky.markdown import md_filter, mdtext_filter
 from krizky.pages import RenderContext, process_page
 from krizky.query import QueryRunner
-from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW
+from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW, render_config_str
 
 
 def _strftime(value: object, fmt: str) -> str:
@@ -100,12 +100,17 @@ def _generate(
     tables_cfg = sources.get("tables", {})
     main_table = next(name for name, tbl in tables_cfg.items() if tbl.get("main"))
 
+    # Load tables and docs first so site.title / site.description can reference them.
+    tables_ctx = {
+        name: fetch_table(conn, name, key_col=tbl.get("key"))
+        for name, tbl in tables_cfg.items()
+    }
+    docs_ctx = _load_docs(sources.get("docs", {}), sources_output)
+    _site_render_ctx = {"tables": tables_ctx, "docs": docs_ctx}
+
     base_ctx = {
-        "tables": {
-            name: fetch_table(conn, name, key_col=tbl.get("key"))
-            for name, tbl in tables_cfg.items()
-        },
-        "docs": _load_docs(sources.get("docs", {}), sources_output),
+        "tables": tables_ctx,
+        "docs": docs_ctx,
         "query": QueryRunner(conn, config.get("queries", {})),
         "page_urls": {
             name: cfg.get("path", "")
@@ -117,8 +122,8 @@ def _generate(
             "inline_css": _load_inline_css(site, config_dir),
         },
         "site": {
-            "title": site.get("title", ""),
-            "description": site.get("description", ""),
+            "title": render_config_str(site.get("title", ""), **_site_render_ctx),
+            "description": render_config_str(site.get("description", ""), **_site_render_ctx),
             "language": site.get("language", ""),
             "date_format": site.get("date_format", "%-d. %-m. %Y"),
             "time_format": site.get("time_format", "%H:%M:%S"),
