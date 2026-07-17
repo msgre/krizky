@@ -161,7 +161,9 @@ def _get_r2_client(photos_cfg: dict):
     import boto3
 
     dest = photos_cfg["destination"]
-    endpoint = f"https://{dest['account_id']}.r2.cloudflarestorage.com"
+    jurisdiction = dest.get("jurisdiction", "")
+    jurisdiction_prefix = f"{jurisdiction}." if jurisdiction else ""
+    endpoint = f"https://{dest['account_id']}.{jurisdiction_prefix}r2.cloudflarestorage.com"
     return boto3.client(
         "s3",
         endpoint_url=endpoint,
