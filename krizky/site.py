@@ -142,7 +142,8 @@ def _generate(
     }
 
 
-    # Photo context — always present so templates can call photos(row) unconditionally.
+    # Photo context — always present so templates can call photos(row) unconditionally,
+    # including from imported macros (registered as jinja_env global, not just base_ctx).
     # Returns has_photos=False for every row when sources.photos is not configured.
     photos_cfg = sources.get("photos")
     if photos_cfg:
@@ -151,7 +152,7 @@ def _generate(
         fp_path = photos_dir / "focal_points.json"
         cf_meta = json.loads(cf_meta_path.read_text(encoding="utf-8")) if cf_meta_path.exists() else {}
         focal_points = json.loads(fp_path.read_text(encoding="utf-8")) if fp_path.exists() else {}
-        base_ctx["photos"] = PhotoContext(
+        _photo_ctx = PhotoContext(
             cf_meta=cf_meta,
             focal_points=focal_points,
             base_url=photos_cfg.get("base_url", ""),
@@ -159,7 +160,9 @@ def _generate(
             sizes=photos_cfg.get("sizes", []),
         )
     else:
-        base_ctx["photos"] = PhotoContext(cf_meta={}, focal_points={}, base_url="", formats=[], sizes=[])
+        _photo_ctx = PhotoContext(cf_meta={}, focal_points={}, base_url="", formats=[], sizes=[])
+    base_ctx["photos"] = _photo_ctx
+    jinja_env.globals["photos"] = _photo_ctx
 
     _copy_assets(site, config_dir, output_dir)
 
