@@ -89,9 +89,9 @@ class QueryRunner:
     def __init__(self, conn: sqlite3.Connection, queries_cfg: dict) -> None:
         self._conn = conn
         self._cfg = queries_cfg
-        self._cache: dict[tuple, list[dict]] = {}
+        self._cache: dict[tuple, list[dict] | dict[str, dict]] = {}
 
-    def __call__(self, name: str, **params) -> list[dict]:
+    def __call__(self, name: str, **params) -> list[dict] | dict[str, dict]:
         try:
             cache_key: tuple | None = (name, tuple(sorted(params.items())))
         except TypeError:
@@ -112,6 +112,11 @@ class QueryRunner:
             _log.error("query(%r, %r): failed — %s", name, params, exc)
             return []
 
+        key_col = query_cfg.get("key")
+        result: list[dict] | dict[str, dict] = (
+            {row[key_col]: row for row in rows} if key_col else rows
+        )
+
         if cache_key is not None:
-            self._cache[cache_key] = rows
-        return rows
+            self._cache[cache_key] = result
+        return result

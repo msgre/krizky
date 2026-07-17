@@ -181,6 +181,29 @@ def test_query_bad_sql_returns_empty():
     assert result == []
 
 
+def test_query_key_returns_dict():
+    """Při definovaném key vrátí query dict keyed by daný sloupec."""
+    conn = _make_conn([
+        {"slug": "a", "val": "1"},
+        {"slug": "b", "val": "2"},
+    ])
+    cfg = {"q": {"sql": "SELECT * FROM items", "key": "slug"}}
+    runner = QueryRunner(conn, cfg)
+    result = runner("q")
+    assert isinstance(result, dict)
+    assert set(result.keys()) == {"a", "b"}
+    assert result["a"]["val"] == "1"
+    assert result["b"]["val"] == "2"
+
+
+def test_query_without_key_returns_list():
+    """Bez key vrátí query list jako dosud."""
+    conn = _make_conn([{"slug": "a", "val": "1"}])
+    cfg = {"q": {"sql": "SELECT * FROM items"}}
+    runner = QueryRunner(conn, cfg)
+    assert isinstance(runner("q"), list)
+
+
 def test_query_bad_sql_logs_error(caplog):
     """Invalid SQL produces an error log entry."""
     import logging
