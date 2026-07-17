@@ -138,15 +138,20 @@ def _get_drive_service(photos_cfg: dict, config_dir: Path):
     account_key: str = photos_cfg["source"]["account_key"]
     scopes = ["https://www.googleapis.com/auth/drive.readonly"]
 
-    try:
-        key_data = json.loads(account_key)
-    except json.JSONDecodeError:
+    if account_key.strip().startswith("{"):
+        try:
+            key_data = json.loads(account_key)
+        except json.JSONDecodeError as exc:
+            raise PhotoError(
+                f"account_key looks like JSON but failed to parse: {exc}\n"
+                "Tip: store the JSON in a file and set account_key to the file path instead."
+            ) from exc
+        creds = Credentials.from_service_account_info(key_data, scopes=scopes)
+    else:
         key_path = Path(account_key)
         if not key_path.is_absolute():
             key_path = (config_dir / account_key).resolve()
         creds = Credentials.from_service_account_file(str(key_path), scopes=scopes)
-    else:
-        creds = Credentials.from_service_account_info(key_data, scopes=scopes)
 
     return build("drive", "v3", credentials=creds)
 

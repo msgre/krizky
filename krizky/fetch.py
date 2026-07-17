@@ -160,16 +160,24 @@ def fetch_gdrive_metadata(config: dict, config_dir: Path) -> list[dict]:
     account_key: str = source_cfg["account_key"]
     scopes = ["https://www.googleapis.com/auth/drive.readonly"]
 
-    # account_key can be a JSON string (CI/CD) or a path to a JSON file.
-    try:
-        key_data = json.loads(account_key)
-    except json.JSONDecodeError:
+    # account_key is either:
+    #   - a path to a JSON file (recommended): account_key: $GDRIVE_ACCOUNT_KEY
+    #     where GDRIVE_ACCOUNT_KEY=/path/to/service-account.json
+    #   - raw JSON content (CI/CD): the string must start with '{'
+    if account_key.strip().startswith("{"):
+        try:
+            key_data = json.loads(account_key)
+        except json.JSONDecodeError as exc:
+            raise FetchError(
+                f"account_key looks like JSON but failed to parse: {exc}\n"
+                "Tip: store the JSON in a file and set account_key to the file path instead."
+            ) from exc
+        creds = Credentials.from_service_account_info(key_data, scopes=scopes)
+    else:
         key_path = Path(account_key)
         if not key_path.is_absolute():
             key_path = (config_dir / account_key).resolve()
         creds = Credentials.from_service_account_file(str(key_path), scopes=scopes)
-    else:
-        creds = Credentials.from_service_account_info(key_data, scopes=scopes)
 
     service = _build("drive", "v3", credentials=creds)
 
