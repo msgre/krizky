@@ -83,11 +83,16 @@ def compare_photos(
     for base, entry in gdrive_index.items():
         cf_entry = cf_meta.get(base)
         if cf_entry is None:
+            # New photo — not in CF yet.
             to_process.append(entry)
             continue
-        if entry.get("last_modified") != cf_entry.get("_last_modified"):
-            to_process.append(entry)
-            continue
+        cf_last_modified = cf_entry.get("_last_modified")
+        if cf_last_modified is not None:
+            # We know when this photo was last processed; compare timestamps.
+            if entry.get("last_modified") != cf_last_modified:
+                to_process.append(entry)
+                continue
+        # Check that all expected size variants are present.
         cf_sizes = {k for k in cf_entry if not k.startswith("_")}
         if not expected_sizes.issubset(cf_sizes):
             to_process.append(entry)

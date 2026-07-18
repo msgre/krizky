@@ -166,6 +166,23 @@ def test_compare_additional_photos():
     assert _normalize_base_name("007-1.jpg", 7) == "007-1"
 
 
+def test_compare_no_last_modified_checks_only_sizes():
+    """CF entry bez _last_modified → neporovnává timestamp, jen varianty."""
+    gdrive = [_entry("007.jpg", 7, "2026-07-01T00:00:00Z")]
+    # Stará CF metadata bez _last_modified, ale se všemi variantami.
+    cf = {"007": {"thumb": {"w": 330, "h": 220}, "big": {"w": 1600, "h": 1067}}}
+    result = compare_photos(gdrive, cf, PHOTOS_CFG)
+    assert result["to_process"] == []
+
+
+def test_compare_no_last_modified_missing_variant():
+    """CF entry bez _last_modified ale s chybějící variantou → reprocess."""
+    gdrive = [_entry("007.jpg", 7, "2026-07-01T00:00:00Z")]
+    cf = {"007": {"thumb": {"w": 330, "h": 220}}}  # big chybí
+    result = compare_photos(gdrive, cf, PHOTOS_CFG)
+    assert len(result["to_process"]) == 1
+
+
 def test_compare_duplicate_entries_last_wins():
     """Při duplicitním base_name v gdrive_meta se použije poslední záznam."""
     gdrive = [
