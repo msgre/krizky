@@ -13,6 +13,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import click
+
 _log = logging.getLogger(__name__)
 
 
@@ -255,6 +257,8 @@ def _process_photo(
     cf_client,
     work_dir: Path,
     dry_run: bool,
+    index: int = 0,
+    total: int = 0,
 ) -> dict:
     """Download, resize, convert, and upload one photo.
 
@@ -268,16 +272,19 @@ def _process_photo(
     sizes: list[dict] = photos_cfg.get("sizes", [])
     bucket: str = photos_cfg["destination"]["bucket"]
 
-    suffix = Path(entry["title"]).suffix or ".jpg"
-    temp_file = work_dir / f"{base_name}_orig{suffix}"
-
-    _log.info("Processing %s (Drive file %s)", base_name, entry["file_id"])
+    width = len(str(total))
+    counter = f"[{index:{width}}/{total}]" if total else ""
+    prefix = f"  {counter} {base_name}"
 
     if dry_run:
-        _log.info("  dry-run: would download and process %s", base_name)
+        click.echo(f"{prefix}  (dry-run)")
         return {}
 
+    click.echo(f"{prefix}  ↓ stahování...", nl=False)
+    suffix = Path(entry["title"]).suffix or ".jpg"
+    temp_file = work_dir / f"{base_name}_orig{suffix}"
     _download_drive_file(service, entry["file_id"], temp_file)
+    click.echo("\r" + " " * (len(prefix) + 20) + "\r", nl=False)  # přepsat řádek
 
     try:
         img = Image.open(temp_file)
@@ -287,6 +294,7 @@ def _process_photo(
             img = img.convert("RGB")
 
         dims: dict = {"_last_modified": entry["last_modified"]}
+        fmt_names = [f["format"] for f in formats]
 
         for size_cfg in sizes:
             size_name = size_cfg["name"]
@@ -302,16 +310,19 @@ def _process_photo(
             actual_w, actual_h = resized.size
             dims[size_name] = {"w": actual_w, "h": actual_h}
 
+            click.echo(f"{prefix}  {size_name:8} {actual_w}×{actual_h}", nl=False)
+
             for fmt_cfg in formats:
                 fmt_name = fmt_cfg["format"]
                 quality = resolve_quality(size_cfg, fmt_name, fmt_cfg)
                 out_path = work_dir / f"{base_name}_{size_name}.{fmt_name}"
-
                 _save_image(resized, out_path, fmt_name, quality, fmt_cfg.get("optimizer"))
-
                 if cf_client:
                     _upload_to_r2(cf_client, bucket, out_path, fmt_cfg["mime"])
                     out_path.unlink(missing_ok=True)
+                click.echo(f"  {fmt_name}", nl=False)
+
+            click.echo()  # nový řádek po každé velikosti
 
         return dims
 
@@ -366,14 +377,14 @@ def build_photos(
     else:
         changes = compare_photos(gdrive_meta, cf_meta, photos_cfg)
 
-    _log.info(
-        "Photos: %d to process, %d to delete",
-        len(changes["to_process"]), len(changes["to_delete"]),
-    )
+    n_process = len(changes["to_process"])
+    n_delete = len(changes["to_delete"])
 
-    if not changes["to_process"] and not changes["to_delete"]:
-        _log.info("No photo changes detected.")
+    if not n_process and not n_delete:
+        click.echo("Žádné změny fotek.")
         return
+
+    click.echo(f"Fotky: {n_process} ke zpracování, {n_delete} ke smazání")
 
     _check_optimizers(photos_cfg)
 
@@ -383,22 +394,27 @@ def build_photos(
     with tempfile.TemporaryDirectory(prefix="krizky_photos_") as tmp:
         work_dir = Path(tmp)
 
-        for entry in changes["to_process"]:
+        for idx, entry in enumerate(changes["to_process"], 1):
             base = _normalize_base_name(entry["title"], entry["row_number"])
             try:
-                result = _process_photo(entry, service, photos_cfg, cf_client, work_dir, dry_run)
+                result = _process_photo(
+                    entry, service, photos_cfg, cf_client, work_dir, dry_run,
+                    index=idx, total=n_process,
+                )
                 if not dry_run and result:
                     cf_meta[base] = result
             except Exception as exc:
+                click.echo(click.style(f"  CHYBA {base}: {exc}", fg="red"))
                 _log.error("Failed to process %s: %s", base, exc)
 
         for base in changes["to_delete"]:
-            _log.info("Deleting %s from R2", base)
+            click.echo(f"  mazání {base}...")
             if not dry_run and cf_client:
                 try:
                     _delete_from_r2(cf_client, photos_cfg["destination"]["bucket"], base, photos_cfg)
                     cf_meta.pop(base, None)
                 except Exception as exc:
+                    click.echo(click.style(f"  CHYBA mazání {base}: {exc}", fg="red"))
                     _log.error("Failed to delete %s: %s", base, exc)
 
     if not dry_run:
@@ -406,3 +422,4 @@ def build_photos(
         cf_meta_path.write_text(
             json.dumps(cf_meta, ensure_ascii=False, indent=2), encoding="utf-8"
         )
+        click.echo(click.style(f"Hotovo: {n_process} zpracováno, {n_delete} smazáno.", fg="green"))
