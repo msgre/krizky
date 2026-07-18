@@ -33,6 +33,17 @@ def parse_row(row: dict) -> dict:
     return {k: _try_json(v.strip() if isinstance(v, str) else v) for k, v in row.items()}
 
 
+def _order_by_clause(order_by: str, ordering: str) -> str:
+    """Return a SQL ORDER BY clause fragment.
+
+    If *order_by* contains a comma or a space it is used verbatim (multi-column
+    or direction-qualified expression). Otherwise *ordering* is appended.
+    """
+    if "," in order_by or " " in order_by.strip():
+        return f"ORDER BY {order_by}"
+    return f"ORDER BY {order_by} {ordering.upper()}"
+
+
 def fetch_records(
     conn: sqlite3.Connection,
     table: str,
@@ -54,11 +65,7 @@ def fetch_records(
     sql = f"SELECT * FROM [{table}]"
     if condition:
         sql += f" WHERE ({condition})"
-    # If order_by contains a comma or explicit direction keyword, use it verbatim.
-    if "," in order_by or " " in order_by.strip():
-        sql += f" ORDER BY {order_by}"
-    else:
-        sql += f" ORDER BY {order_by} {ordering.upper()}"
+    sql += f" {_order_by_clause(order_by, ordering)}"
     if limit:
         sql += f" LIMIT {limit}"
     return [parse_row(dict(r)) for r in conn.execute(sql).fetchall()]
@@ -164,7 +171,7 @@ def fetch_by_category(
     sql = (
         f"SELECT * FROM [{table}]"
         f" WHERE {' AND '.join(where_parts)}"
-        f" ORDER BY {order_by} {ordering.upper()}"
+        f" {_order_by_clause(order_by, ordering)}"
     )
     if limit:
         sql += f" LIMIT {limit}"
@@ -199,7 +206,7 @@ def fetch_by_tag(
     sql = (
         f"SELECT * FROM [{table}]"
         f" WHERE {' AND '.join(where_parts)}"
-        f" ORDER BY {order_by} {ordering.upper()}"
+        f" {_order_by_clause(order_by, ordering)}"
     )
     if limit:
         sql += f" LIMIT {limit}"
