@@ -10,6 +10,11 @@ __all__ = ["PageProcessor", "RenderContext", "process_page", "resolve_page_site"
 
 def process_page(page_cfg: dict, template, ctx: RenderContext) -> None:
     """Dispatch to the correct page processor based on *page_cfg* flags."""
+    if ctx.pm is not None:
+        plugin_processor = ctx.pm.hook.register_page_processor(page_cfg=page_cfg)
+        if plugin_processor is not None:
+            plugin_processor(page_cfg, template, ctx)
+            return
     if page_cfg.get("detail"):
         processor = detail_page.render
     elif page_cfg.get("category"):

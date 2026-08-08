@@ -1,7 +1,6 @@
 """Click CLI entry point for krizky."""
 
 import logging
-import os
 import shutil
 from pathlib import Path
 
@@ -256,32 +255,14 @@ def fetch_sources(ctx: click.Context, transform: bool) -> None:
         raise SystemExit(1) from None
 
     from krizky.fetch import FetchError, TransformError, fetch_sources as _fetch_sources
+    from krizky.plugin_manager import get_plugin_manager
     try:
         click.echo("Fetching sources...")
-        _fetch_sources(config, config_dir=Path(config_path).parent, transform=transform)
+        config_dir = Path(config_path).parent
+        pm = get_plugin_manager(config_dir)
+        _fetch_sources(config, config_dir=config_dir, transform=transform, pm=pm)
         click.echo(click.style("OK: Sources fetched successfully.", fg="green"))
     except (FetchError, TransformError) as exc:
-        click.echo(click.style(f"ERROR: {exc}", fg="red"))
-        raise SystemExit(1) from None
-
-
-@fetch.command("photos")
-@click.pass_context
-def fetch_photos(ctx: click.Context) -> None:
-    """Fetch photo file list from Google Drive and save to sources/photos/gdrive_metadata.json."""
-    config_path: str = ctx.obj["config"]
-    try:
-        config = load_config(config_path)
-    except ConfigError as exc:
-        click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
-        raise SystemExit(1) from None
-
-    from krizky.fetch import FetchError, fetch_gdrive_metadata
-    try:
-        click.echo("Fetching Google Drive photo metadata...")
-        meta = fetch_gdrive_metadata(config, config_dir=Path(config_path).parent)
-        click.echo(click.style(f"OK: Fetched metadata for {len(meta)} photos.", fg="green"))
-    except FetchError as exc:
         click.echo(click.style(f"ERROR: {exc}", fg="red"))
         raise SystemExit(1) from None
 
@@ -338,24 +319,11 @@ def build_site(ctx: click.Context, force: bool, dry_run: bool, verbose: bool) ->
         raise SystemExit(1) from None
 
 
-@build.command("photos")
-@click.option("--force", is_flag=True, default=False, help="Reprocess all photos, ignore change detection.")
-@click.option("--dry-run", is_flag=True, default=False, help="Show what would happen without downloading or uploading.")
-@click.pass_context
-def build_photos(ctx: click.Context, force: bool, dry_run: bool) -> None:
-    """Process changed photos and upload variants to Cloudflare R2."""
-    config_path: str = ctx.obj["config"]
-    try:
-        config = load_config(config_path)
-    except ConfigError as exc:
-        click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
-        raise SystemExit(1) from None
+# ---------------------------------------------------------------------------
+# Plugin hook: register_commands
+# Allow installed (entry-point) plugins to add CLI commands.
+# Local plugins/ dir is not loaded here — config_dir is not yet known.
+# ---------------------------------------------------------------------------
 
-    from krizky.build_photos import PhotoError, build_photos as _build_photos
-    try:
-        click.echo("Building photos...")
-        _build_photos(config, config_dir=Path(config_path).parent, force=force, dry_run=dry_run)
-        click.echo(click.style("OK: Photos processed successfully.", fg="green"))
-    except PhotoError as exc:
-        click.echo(click.style(f"ERROR: {exc}", fg="red"))
-        raise SystemExit(1) from None
+from krizky.plugin_manager import get_plugin_manager as _get_pm  # noqa: E402
+_get_pm().hook.register_commands(cli=cli)

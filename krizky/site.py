@@ -1,6 +1,5 @@
 """Site generation orchestration for krizky."""
 
-import json
 import shutil
 import sqlite3
 from datetime import date as _date
@@ -12,7 +11,6 @@ import jinja2
 from krizky.db import DEFAULT_ORDER_BY, DEFAULT_ORDERING, fetch_table
 from krizky.markdown import md_filter, mdtext_filter
 from krizky.pages import RenderContext, process_page
-from krizky.photo_context import PhotoContext
 from krizky.query import QueryRunner
 from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW, render_config_str
 
@@ -39,7 +37,7 @@ class SiteError(Exception):
     """Raised when site generation fails."""
 
 
-def build_site(config: dict, config_dir: Path) -> None:
+def build_site(config: dict, config_dir: Path, pm=None) -> None:
     """Generate HTML pages from the existing SQLite database.
 
     Args:
@@ -56,6 +54,10 @@ def build_site(config: dict, config_dir: Path) -> None:
 
     sources_output = (config_dir / sources["output"]).resolve()
     db_path = sources_output / sources["database"]
+
+    if pm is None:
+        from krizky.plugin_manager import get_plugin_manager
+        pm = get_plugin_manager(config_dir)
 
     if not db_path.exists():
         raise SiteError(f"Database not found: {db_path}. Run 'krizky fetch sources --transform' first.")
@@ -78,14 +80,20 @@ def build_site(config: dict, config_dir: Path) -> None:
     jinja_env.filters["md"] = md_filter
     jinja_env.filters["mdtext"] = mdtext_filter
     jinja_env.filters["strftime"] = _strftime
+    pm.hook.prepare_jinja2_environment(env=jinja_env, config=config, config_dir=config_dir)
 
-    photos_src = config.get("sources", {}).get("photos")
-    jinja_env.globals["photo_contexts"] = photos_src.get("contexts", {}) if photos_src else {}
+    # No-op fallback: if no plugin registered photos(), provide one that always
+    # returns has_photos=False so templates using photos() don't crash.
+    if "photos" not in jinja_env.globals:
+        def _noop_photos(row_number):
+            return {"primary": None, "additional": [], "all": [], "count": 0, "has_photos": False}
+        jinja_env.globals["photos"] = _noop_photos
+        jinja_env.globals["photo_contexts"] = {}
 
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     try:
-        _generate(config, config_dir, conn, jinja_env, sources_output, output_dir)
+        _generate(config, config_dir, conn, jinja_env, sources_output, output_dir, pm)
     finally:
         conn.close()
 
@@ -97,6 +105,7 @@ def _generate(
     jinja_env: jinja2.Environment,
     sources_output: Path,
     output_dir: Path,
+    pm,
 ) -> None:
     sources = config["sources"]
     site = config["site"]
@@ -141,34 +150,9 @@ def _generate(
         },
     }
 
-
-    # Photo context — always present so templates can call photos(row) unconditionally,
-    # including from imported macros (registered as jinja_env global, not just base_ctx).
-    # Returns has_photos=False for every row when sources.photos is not configured.
-    photos_cfg = sources.get("photos")
-    if photos_cfg:
-        import logging as _logging
-        _photo_log = _logging.getLogger(__name__)
-        photos_dir = sources_output / "photos"
-        cf_meta_path = photos_dir / "cf_metadata.json"
-        fp_path = photos_dir / "focal_points.json"
-        if not cf_meta_path.exists():
-            _photo_log.warning("Photo metadata not found: %s — run 'krizky build photos' first", cf_meta_path)
-        cf_meta = json.loads(cf_meta_path.read_text(encoding="utf-8")) if cf_meta_path.exists() else {}
-        if not fp_path.exists():
-            _photo_log.warning("Focal points file not found: %s — focal_point will be None for all photos", fp_path)
-        focal_points = json.loads(fp_path.read_text(encoding="utf-8")) if fp_path.exists() else {}
-        _photo_ctx = PhotoContext(
-            cf_meta=cf_meta,
-            focal_points=focal_points,
-            base_url=photos_cfg.get("base_url", ""),
-            formats=photos_cfg.get("formats", []),
-            sizes=photos_cfg.get("sizes", []),
-        )
-    else:
-        _photo_ctx = PhotoContext(cf_meta={}, focal_points={}, base_url="", formats=[], sizes=[])
-    base_ctx["photos"] = _photo_ctx
-    jinja_env.globals["photos"] = _photo_ctx
+    for extra in pm.hook.extra_template_vars(config=config, config_dir=config_dir, conn=conn):
+        if extra:
+            base_ctx.update(extra)
 
     _copy_assets(site, config_dir, output_dir)
 
@@ -195,6 +179,8 @@ def _generate(
                 paginate_by=paginate_by,
                 pagination_window=pagination_window,
                 pagination_boundary=pagination_boundary,
+                pm=pm,
+                config=config,
             ),
         )
 

@@ -1,9 +1,9 @@
 """Shared types for page processors: RenderContext and PageProcessor."""
 
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 import jinja2
 
@@ -62,9 +62,28 @@ class RenderContext:
     paginate_by: int
     pagination_window: int = 2
     pagination_boundary: int = 1
+    pm: Any = None  # pluggy.PluginManager | None
+    config: dict = field(default_factory=dict)
 
 
 class PageProcessor(Protocol):
     """Callable interface implemented by each page type module."""
 
     def __call__(self, page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> None: ...
+
+
+def fire_after_page_written(
+    ctx: RenderContext,
+    page_cfg: dict,
+    html_path: str,
+    records: list[dict],
+) -> None:
+    """Call the after_page_written hook if a plugin manager is available."""
+    if ctx.pm is not None:
+        ctx.pm.hook.after_page_written(
+            page_cfg=page_cfg,
+            html_path=html_path,
+            output_dir=ctx.output_dir,
+            records=records,
+            config=ctx.config,
+        )

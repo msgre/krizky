@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "click>=8.0",
     "jinja2>=3.0",
+    "pluggy>=1.0",
     "pyyaml>=6.0",
     "python-dotenv>=1.0",
     "sqlite-utils>=3.39",
@@ -20,12 +21,7 @@ dependencies = [
 krizky = "krizky.cli:cli"
 
 [project.optional-dependencies]
-photos = [
-    "google-api-python-client>=2.0",
-    "google-auth>=2.0",
-    "Pillow>=10.0",
-    "boto3>=1.28",
-]
+# photos = ["krizky-photos"]  # uncomment after krizky-photos is published on PyPI
 dev = [
     "pytest",
     "pytest-cov",
