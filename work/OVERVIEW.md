@@ -20,6 +20,7 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | —    | Queries — parameterized SQL v šablonách | DONE | [2026-07-16-01-queries.md](2026-07-16-01-queries.md) |
 | —    | Plugin systém (pluggy, 6 hooků, JsonExportPlugin) | DONE | [2026-08-08-01-plugin-system.md](2026-08-08-01-plugin-system.md) |
 | —    | Extrakce krizky-json + krizky-photos do samostatných balíčků | DONE | [2026-08-08-02-extract-plugins.md](2026-08-08-02-extract-plugins.md) |
+| —    | Plugin krizky-filters (in-browser filtrování) | DONE | [2026-08-08-03-krizky-filters-plugin.md](2026-08-08-03-krizky-filters-plugin.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 

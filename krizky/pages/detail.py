@@ -24,6 +24,8 @@ def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> Non
                 **{**ctx.base_ctx, "site": resolve_page_site(ctx.base_ctx["site"], page_cfg, record=record, tables=tables)},
                 filtered=[record],
                 record=record,
+                head_injections=ctx.head_injections,
+                body_end_injections=ctx.body_end_injections,
             ),
             encoding="utf-8",
         )

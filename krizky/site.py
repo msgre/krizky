@@ -166,6 +166,12 @@ def _generate(
         except jinja2.TemplateNotFound:
             raise SiteError(f"Template not found for page '{page_name}': {page_cfg['template']}")
 
+        head_inj = ""
+        body_inj = ""
+        if pm is not None:
+            head_inj = "".join(r for r in pm.hook.inject_head(page_cfg=page_cfg, config=config) if r)
+            body_inj = "".join(r for r in pm.hook.inject_body_end(page_cfg=page_cfg, config=config) if r)
+
         process_page(
             page_cfg,
             template,
@@ -181,6 +187,8 @@ def _generate(
                 pagination_boundary=pagination_boundary,
                 pm=pm,
                 config=config,
+                head_injections=head_inj,
+                body_end_injections=body_inj,
             ),
         )
 

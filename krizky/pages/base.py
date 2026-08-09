@@ -64,6 +64,8 @@ class RenderContext:
     pagination_boundary: int = 1
     pm: Any = None  # pluggy.PluginManager | None
     config: dict = field(default_factory=dict)
+    head_injections: str = ""
+    body_end_injections: str = ""
 
 
 class PageProcessor(Protocol):

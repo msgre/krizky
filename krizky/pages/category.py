@@ -35,7 +35,8 @@ def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> Non
         site_ctx = resolve_page_site(ctx.base_ctx["site"], page_cfg, tables=tables, category=cat_dict)
         render_paginated(
             template, filtered, path, ctx.output_dir, ctx.paginate_by,
-            {**ctx.base_ctx, "category": cat_dict, "site": site_ctx},
+            {**ctx.base_ctx, "category": cat_dict, "site": site_ctx,
+             "head_injections": ctx.head_injections, "body_end_injections": ctx.body_end_injections},
             window=ctx.pagination_window, boundary=ctx.pagination_boundary,
         )
         fire_after_page_written(ctx, page_cfg, path, filtered)

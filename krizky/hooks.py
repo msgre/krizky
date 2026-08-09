@@ -85,6 +85,36 @@ class KrizkySpec:
         """
 
     @hookspec
+    def inject_head(self, page_cfg, config):
+        """Return an HTML string to inject into <head> for this page, or None.
+
+        Called once per page definition before rendering. All implementations
+        are called; results are concatenated in registration order.
+
+        Use this to inject <link>, <meta>, or <style> tags that apply only to
+        pages matching a specific config key (e.g. ``filters``).
+
+        Args:
+            page_cfg: Page configuration dict from config.yaml.
+            config: Full krizky config dict.
+        """
+
+    @hookspec
+    def inject_body_end(self, page_cfg, config):
+        """Return an HTML string to inject before </body> for this page, or None.
+
+        Called once per page definition before rendering. All implementations
+        are called; results are concatenated in registration order.
+
+        Use this to inject <script> tags or inline data that apply only to
+        pages matching a specific config key (e.g. ``filters``).
+
+        Args:
+            page_cfg: Page configuration dict from config.yaml.
+            config: Full krizky config dict.
+        """
+
+    @hookspec
     def after_sources_fetched(self, config, config_dir, sources_output):
         """Called after all tables and docs are fetched and transformed.
 
