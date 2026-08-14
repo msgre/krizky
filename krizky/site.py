@@ -33,6 +33,28 @@ def _strftime(value: object, fmt: str) -> str:
     return str(value)
 
 
+def _make_absolute_url(base_url: str):
+    """Return a Jinja2 global that joins *base_url* with a page-relative path.
+
+    - Absolute URLs (``http://``, ``https://``, protocol-relative ``//``) pass through unchanged.
+    - Relative paths are joined with a single ``/`` separator, regardless of whether
+      the input starts with one.
+    - Empty ``base_url`` returns the path as-is (fallback for local previews / dev).
+    """
+    base = base_url.rstrip("/")
+
+    def _absolute_url(path: str) -> str:
+        if not path:
+            return base
+        if path.startswith(("http://", "https://", "//")):
+            return path
+        if not path.startswith("/"):
+            path = "/" + path
+        return f"{base}{path}" if base else path
+
+    return _absolute_url
+
+
 class SiteError(Exception):
     """Raised when site generation fails."""
 
@@ -80,6 +102,7 @@ def build_site(config: dict, config_dir: Path, pm=None) -> None:
     jinja_env.filters["md"] = md_filter
     jinja_env.filters["mdtext"] = mdtext_filter
     jinja_env.filters["strftime"] = _strftime
+    jinja_env.globals["absolute_url"] = _make_absolute_url(site.get("base_url", ""))
     pm.hook.prepare_jinja2_environment(env=jinja_env, config=config, config_dir=config_dir)
 
     # No-op fallback: if no plugin registered photos(), provide one that always
@@ -144,6 +167,7 @@ def _generate(
             "title": render_config_str(site.get("title", ""), **_site_render_ctx),
             "description": render_config_str(site.get("description", ""), **_site_render_ctx),
             "language": site.get("language", ""),
+            "base_url": site.get("base_url", "").rstrip("/"),
             "date_format": site.get("date_format", "%-d. %-m. %Y"),
             "time_format": site.get("time_format", "%H:%M:%S"),
             "datetime_format": site.get("datetime_format", "%-d. %-m. %Y %H:%M:%S"),

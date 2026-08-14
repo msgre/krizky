@@ -21,6 +21,9 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | —    | Plugin systém (pluggy, 6 hooků, JsonExportPlugin) | DONE | [2026-08-08-01-plugin-system.md](2026-08-08-01-plugin-system.md) |
 | —    | Extrakce krizky-json + krizky-photos do samostatných balíčků | DONE | [2026-08-08-02-extract-plugins.md](2026-08-08-02-extract-plugins.md) |
 | —    | Plugin krizky-filters (in-browser filtrování) | DONE | [2026-08-08-03-krizky-filters-plugin.md](2026-08-08-03-krizky-filters-plugin.md) |
+| —    | Focal points — konfigurovatelná cesta + runtime JS pro filters | DONE | [2026-08-12-01-focal-points-configurable-and-js.md](2026-08-12-01-focal-points-configurable-and-js.md) |
+| —    | Lightbox caption per fotka (šablona + JS v projektu) | DONE | [2026-08-12-02-lightbox-caption.md](2026-08-12-02-lightbox-caption.md) |
+| —    | Plugin krizky-share (OG / Twitter meta, Schema.org, sdílecí widget) + `absolute_url` v core | DONE | [2026-08-14-01-share-plugin.md](2026-08-14-01-share-plugin.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 

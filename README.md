@@ -129,9 +129,11 @@ site:
 | `site.title` | vždy | název webu (přetížitelný na úrovni pages) |
 | `site.description` | vždy | popis webu |
 | `site.language` | vždy | kód jazyka (přetížitelný na úrovni pages) |
+| `site.base_url` | vždy | absolutní URL webu (bez koncového `/`); prázdné pokud není v configu |
 | `site.date_format` | vždy | formátovací řetězec pro datum |
 | `site.time_format` | vždy | formátovací řetězec pro čas |
 | `site.datetime_format` | vždy | formátovací řetězec pro datum a čas |
+| `absolute_url(path)` | vždy | funkce; spojí `site.base_url` s relativní cestou. Absolutní URL projdou beze změny. |
 | `build.last_update` | vždy | `datetime` spuštění buildu |
 | `build.assets_url` | vždy | URL prefix pro assets |
 | `build.inline_css` | vždy | obsah `assets/css/style.css` (pro inline vložení) |

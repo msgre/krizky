@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from krizky.render import page_path, render_config_str
-from krizky.site import SiteError, build_site
+from krizky.site import SiteError, _make_absolute_url, build_site
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +112,62 @@ def test_render_config_str_cross_table() -> None:
         tables=tables,
     )
     assert result == "Kříž"
+
+
+# ---------------------------------------------------------------------------
+# absolute_url helper
+# ---------------------------------------------------------------------------
+
+def test_absolute_url_joins_base_and_path() -> None:
+    fn = _make_absolute_url("https://example.com")
+    assert fn("/mista.html") == "https://example.com/mista.html"
+
+
+def test_absolute_url_strips_trailing_slash_from_base() -> None:
+    fn = _make_absolute_url("https://example.com/")
+    assert fn("/foo") == "https://example.com/foo"
+
+
+def test_absolute_url_normalizes_missing_leading_slash() -> None:
+    fn = _make_absolute_url("https://example.com")
+    assert fn("foo.html") == "https://example.com/foo.html"
+
+
+def test_absolute_url_passes_through_absolute_url() -> None:
+    fn = _make_absolute_url("https://example.com")
+    assert fn("https://other.com/x") == "https://other.com/x"
+    assert fn("http://other.com/x") == "http://other.com/x"
+    assert fn("//cdn.example.com/x") == "//cdn.example.com/x"
+
+
+def test_absolute_url_empty_path_returns_base() -> None:
+    fn = _make_absolute_url("https://example.com")
+    assert fn("") == "https://example.com"
+
+
+def test_absolute_url_no_base_returns_path_as_is() -> None:
+    fn = _make_absolute_url("")
+    assert fn("/foo.html") == "/foo.html"
+    assert fn("foo.html") == "/foo.html"
+
+
+def test_absolute_url_and_site_base_url_in_template(tmp_path: Path) -> None:
+    """Both site.base_url and absolute_url() are available in templates."""
+    config = _setup(
+        tmp_path,
+        [{"slug": "a", "nazev": "First"}],
+        {"home": {"path": "/index.html", "template": "index.html"}},
+        extra_site={"base_url": "https://valasskenebe.cz"},
+    )
+    _make_template(
+        tmp_path, "index.html",
+        "{{ site.base_url }}|{{ absolute_url('/foo.html') }}",
+    )
+
+    build_site(config, config_dir=tmp_path)
+
+    out = (tmp_path / "output" / "index.html").read_text(encoding="utf-8")
+    assert out == "https://valasskenebe.cz|https://valasskenebe.cz/foo.html"
 
 
 # ---------------------------------------------------------------------------
