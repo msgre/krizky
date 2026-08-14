@@ -137,7 +137,7 @@ Aplikováno na projekt Valašské nebe (`temp/`) — pro dokumentaci pluginu obe
 ### Změněné šablony v temp/templates/
 
 - `base.html` — nový `{% block extra_meta %}` v `<head>`.
-- `detail.html` — import maker, top-level `set` pro `imgs`, `page_url`, `og_image` (sdíleno mezi bloky); extra_meta s `share_meta(article)` + `share_schema_place(LandmarksOrHistoricalBuilding)`; `share_buttons` mezi detail-grid a příběhem.
+- `detail.html` — import maker, top-level `set` pro `imgs`, `page_url`, `og_image` (sdíleno mezi bloky); extra_meta s `share_meta(article)` + `share_schema_place(LandmarksOrHistoricalBuilding)`; `share_buttons` vedle H1 v `.detail-head` (flexbox `margin-left:auto` pushuje ikony na pravý kraj), `label=none` skryje desktop textový prefix — jen ikony vedle nadpisu, mobilní tlačítko "Sdílet" zůstává (jinak by ikona nebyla srozumitelná).
 - `_category_list.html` — top-level `page_url` (kategorie/obdobi/stitek dostávají `absolute_url('/' ~ category.slug ~ '.html')`, vsechna_mista `absolute_url(page_urls[page_name])` — canonical bez paginačního suffixu, sdílí se první stránka tematické skupiny); extra_meta se `share_meta`; `share_buttons` na konci wrap.
 - `index.html` — jen `share_meta` v extra_meta.
 - `config.yaml` — přidán nový `site.share:` blok jako reference (twitter_site, default_image, locale, networks).
