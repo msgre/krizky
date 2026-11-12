@@ -176,9 +176,9 @@ def _generate(
             "description": render_config_str(site.get("description", ""), **_site_render_ctx),
             "language": site.get("language", ""),
             "base_url": site.get("base_url", "").rstrip("/"),
-            "date_format": site.get("date_format", "%-d. %-m. %Y"),
+            "date_format": site.get("date_format", "%-d.\u00a0%-m.\u00a0%Y"),
             "time_format": site.get("time_format", "%H:%M:%S"),
-            "datetime_format": site.get("datetime_format", "%-d. %-m. %Y %H:%M:%S"),
+            "datetime_format": site.get("datetime_format", "%-d.\u00a0%-m.\u00a0%Y\u00a0%H:%M:%S"),
         },
     }
 
@@ -195,8 +195,10 @@ def _generate(
 
         try:
             template = jinja_env.get_template(page_cfg["template"])
-        except jinja2.TemplateNotFound:
-            raise SiteError(f"Template not found for page '{page_name}': {page_cfg['template']}")
+        except jinja2.TemplateNotFound as exc:
+            raise SiteError(
+                f"Template not found for page '{page_name}': {page_cfg['template']}"
+            ) from exc
 
         head_inj = ""
         body_inj = ""

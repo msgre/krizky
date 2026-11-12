@@ -1,7 +1,5 @@
 """Plugin manager factory for krizky."""
 
-from __future__ import annotations
-
 import importlib.metadata
 import importlib.util
 from pathlib import Path

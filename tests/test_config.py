@@ -1,7 +1,5 @@
 """Tests for krizky.config module."""
 
-from __future__ import annotations
-
 import textwrap
 from pathlib import Path
 

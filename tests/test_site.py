@@ -1,7 +1,5 @@
 """Tests for krizky.site module."""
 
-from __future__ import annotations
-
 import json
 import sqlite3
 from datetime import datetime
@@ -340,9 +338,13 @@ def test_category_page(tmp_path: Path) -> None:
     kriz = (tmp_path / "output" / "kriz.html").read_text(encoding="utf-8")
     socha = (tmp_path / "output" / "socha.html").read_text(encoding="utf-8")
     assert kriz.startswith("kriz:")  # category.value
-    assert "a," in kriz and "b," in kriz and "c" not in kriz
+    assert "a," in kriz
+    assert "b," in kriz
+    assert "c" not in kriz
     assert socha.startswith("socha:")
-    assert "c," in socha and "a," not in socha and "b," not in socha
+    assert "c," in socha
+    assert "a," not in socha
+    assert "b," not in socha
 
 
 # ---------------------------------------------------------------------------
@@ -392,9 +394,13 @@ def test_category_page_many(tmp_path: Path) -> None:
     priroda = (tmp_path / "output" / "priroda.html").read_text(encoding="utf-8")
     kamen = (tmp_path / "output" / "kamen.html").read_text(encoding="utf-8")
     assert "priroda:" in priroda  # category.value
-    assert "a," in priroda and "b," in priroda and "c" not in priroda
+    assert "a," in priroda
+    assert "b," in priroda
+    assert "c" not in priroda
     assert "kamen:" in kamen
-    assert "a," in kamen and "c," in kamen and "b" not in kamen
+    assert "a," in kamen
+    assert "c," in kamen
+    assert "b" not in kamen
 
 
 # ---------------------------------------------------------------------------

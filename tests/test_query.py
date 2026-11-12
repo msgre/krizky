@@ -1,7 +1,5 @@
 """Tests for krizky.query — QueryRunner and _render_parameterized."""
 
-from __future__ import annotations
-
 import sqlite3
 from pathlib import Path
 
@@ -152,8 +150,10 @@ def test_query_cache_miss_on_different_params():
     r1 = runner("q", v="1")
     r2 = runner("q", v="2")
 
-    assert len(r1) == 1 and r1[0]["slug"] == "a"
-    assert len(r2) == 1 and r2[0]["slug"] == "b"
+    assert len(r1) == 1
+    assert r1[0]["slug"] == "a"
+    assert len(r2) == 1
+    assert r2[0]["slug"] == "b"
 
 
 def test_query_unknown_name_returns_empty():
