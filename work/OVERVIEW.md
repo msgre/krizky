@@ -29,7 +29,7 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | —    | Swarm naming-logger (přejmenování FiltersPlugin, logger) | DONE (krizky-filters PR #4 sloučen, retro hotové) | [2026-11-09-01-naming-logger.md](2026-11-09-01-naming-logger.md) · [2026-11-10-01-naming-logger.md](2026-11-10-01-naming-logger.md) |
 | —    | Swarm js-only-widget (filtrovací widget jen s JS) | DONE (krizky-filters PR #7 sloučen) | [2026-11-11-01-js-only-widget.md](2026-11-11-01-js-only-widget.md) |
 | —    | /swarm:init a příprava krizky-map pro swarm | DONE (map, photos, share a json připravené, PR #1 sloučeny; kontrola všech pluginů 2026-11-12) | [2026-11-11-02-swarm-init-map.md](2026-11-11-02-swarm-init-map.md) |
-| —    | Úklid core a přesun pluginů vedle core (příprava core pro swarm) | IN PROGRESS (pluginy přesunuté; PR `core-cleanup`; otevřené: skilly a reporty) | [2026-11-12-01-core-cleanup.md](2026-11-12-01-core-cleanup.md) |
+| —    | Úklid core a přesun pluginů vedle core (příprava core pro swarm) | IN PROGRESS (pluginy přesunuté; PR `core-cleanup` čeká na sloučení, pak `/swarm:init`) | [2026-11-12-01-core-cleanup.md](2026-11-12-01-core-cleanup.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 
