@@ -95,6 +95,7 @@ config       — celý krizky config dict
 
 from krizky.hooks import hookimpl
 
+
 class MyPlugin:
     @hookimpl
     def prepare_jinja2_environment(self, env, config):
@@ -104,6 +105,7 @@ class MyPlugin:
     def after_page_written(self, page_cfg, html_path, output_dir, records, config):
         # např. generovat search index
         pass
+
 
 plugin = MyPlugin()
 ```

@@ -46,7 +46,7 @@ Přidán parametr `config_dir` do `prepare_jinja2_environment` hookspec. Zpětn�
 - Přidán no-op fallback po hook callu:
   ```python
   if "photos" not in jinja_env.globals:
-      jinja_env.globals["photos"] = _noop_photos   # vrací has_photos=False
+      jinja_env.globals["photos"] = _noop_photos  # vrací has_photos=False
       jinja_env.globals["photo_contexts"] = {}
   ```
   Zajišťuje, že šablony používající `photos()` nespadnou pokud krizky-photos není nainstalovaný.

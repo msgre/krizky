@@ -12,7 +12,12 @@ from krizky.db import DEFAULT_ORDER_BY, DEFAULT_ORDERING, fetch_table
 from krizky.markdown import md_filter, mdtext_filter
 from krizky.pages import RenderContext, process_page
 from krizky.query import QueryRunner
-from krizky.render import DEFAULT_PAGINATE_BY, DEFAULT_PAGINATION_BOUNDARY, DEFAULT_PAGINATION_WINDOW, render_config_str
+from krizky.render import (
+    DEFAULT_PAGINATE_BY,
+    DEFAULT_PAGINATION_BOUNDARY,
+    DEFAULT_PAGINATION_WINDOW,
+    render_config_str,
+)
 
 _BUILTIN_TEMPLATES = Path(__file__).parent / "templates"
 
@@ -79,10 +84,13 @@ def build_site(config: dict, config_dir: Path, pm=None) -> None:
 
     if pm is None:
         from krizky.plugin_manager import get_plugin_manager
+
         pm = get_plugin_manager(config_dir)
 
     if not db_path.exists():
-        raise SiteError(f"Database not found: {db_path}. Run 'krizky fetch sources --transform' first.")
+        raise SiteError(
+            f"Database not found: {db_path}. Run 'krizky fetch sources --transform' first."
+        )
 
     output_dir = (config_dir / site["output"]).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -92,10 +100,12 @@ def build_site(config: dict, config_dir: Path, pm=None) -> None:
         raise SiteError(f"Templates directory not found: {templates_dir}")
 
     jinja_env = jinja2.Environment(
-        loader=jinja2.ChoiceLoader([
-            jinja2.FileSystemLoader(str(templates_dir)),
-            jinja2.FileSystemLoader(str(_BUILTIN_TEMPLATES)),
-        ]),
+        loader=jinja2.ChoiceLoader(
+            [
+                jinja2.FileSystemLoader(str(templates_dir)),
+                jinja2.FileSystemLoader(str(_BUILTIN_TEMPLATES)),
+            ]
+        ),
         autoescape=jinja2.select_autoescape(["html"]),
         keep_trailing_newline=True,
     )
@@ -108,8 +118,10 @@ def build_site(config: dict, config_dir: Path, pm=None) -> None:
     # No-op fallback: if no plugin registered photos(), provide one that always
     # returns has_photos=False so templates using photos() don't crash.
     if "photos" not in jinja_env.globals:
+
         def _noop_photos(row_number):
             return {"primary": None, "additional": [], "all": [], "count": 0, "has_photos": False}
+
         jinja_env.globals["photos"] = _noop_photos
         jinja_env.globals["photo_contexts"] = {}
 
@@ -144,8 +156,7 @@ def _generate(
 
     # Load tables and docs first so site.title / site.description can reference them.
     tables_ctx = {
-        name: fetch_table(conn, name, key_col=tbl.get("key"))
-        for name, tbl in tables_cfg.items()
+        name: fetch_table(conn, name, key_col=tbl.get("key")) for name, tbl in tables_cfg.items()
     }
     docs_ctx = _load_docs(sources.get("docs", {}), sources_output)
     _site_render_ctx = {"tables": tables_ctx, "docs": docs_ctx}
@@ -154,10 +165,7 @@ def _generate(
         "tables": tables_ctx,
         "docs": docs_ctx,
         "query": QueryRunner(conn, config.get("queries", {})),
-        "page_urls": {
-            name: cfg.get("path", "")
-            for name, cfg in site.get("pages", {}).items()
-        },
+        "page_urls": {name: cfg.get("path", "") for name, cfg in site.get("pages", {}).items()},
         "build": {
             "last_update": datetime.now(),
             "assets_url": site.get("assets_url", ""),
@@ -168,9 +176,9 @@ def _generate(
             "description": render_config_str(site.get("description", ""), **_site_render_ctx),
             "language": site.get("language", ""),
             "base_url": site.get("base_url", "").rstrip("/"),
-            "date_format": site.get("date_format", "%-d. %-m. %Y"),
+            "date_format": site.get("date_format", "%-d.\u00a0%-m.\u00a0%Y"),
             "time_format": site.get("time_format", "%H:%M:%S"),
-            "datetime_format": site.get("datetime_format", "%-d. %-m. %Y %H:%M:%S"),
+            "datetime_format": site.get("datetime_format", "%-d.\u00a0%-m.\u00a0%Y\u00a0%H:%M:%S"),
         },
     }
 
@@ -187,14 +195,20 @@ def _generate(
 
         try:
             template = jinja_env.get_template(page_cfg["template"])
-        except jinja2.TemplateNotFound:
-            raise SiteError(f"Template not found for page '{page_name}': {page_cfg['template']}")
+        except jinja2.TemplateNotFound as exc:
+            raise SiteError(
+                f"Template not found for page '{page_name}': {page_cfg['template']}"
+            ) from exc
 
         head_inj = ""
         body_inj = ""
         if pm is not None:
-            head_inj = "".join(r for r in pm.hook.inject_head(page_cfg=page_cfg, config=config) if r)
-            body_inj = "".join(r for r in pm.hook.inject_body_end(page_cfg=page_cfg, config=config) if r)
+            head_inj = "".join(
+                r for r in pm.hook.inject_head(page_cfg=page_cfg, config=config) if r
+            )
+            body_inj = "".join(
+                r for r in pm.hook.inject_body_end(page_cfg=page_cfg, config=config) if r
+            )
 
         process_page(
             page_cfg,

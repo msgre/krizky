@@ -1,20 +1,15 @@
 """Tests for krizky.query — QueryRunner and _render_parameterized."""
 
-from __future__ import annotations
-
 import sqlite3
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from krizky.query import QueryRunner, _render_parameterized
 from krizky.site import build_site
 
-
 # ---------------------------------------------------------------------------
 # _render_parameterized
 # ---------------------------------------------------------------------------
+
 
 def test_render_parameterized_basic():
     """Each {{ param }} becomes ? and the value is collected in order."""
@@ -79,6 +74,7 @@ def test_render_parameterized_none_value():
 # QueryRunner — unit tests with real SQLite
 # ---------------------------------------------------------------------------
 
+
 def _make_conn(records: list[dict], table: str = "items") -> sqlite3.Connection:
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
@@ -98,13 +94,15 @@ def _make_conn(records: list[dict], table: str = "items") -> sqlite3.Connection:
 
 def test_query_basic():
     """QueryRunner executes SQL and returns matching records."""
-    conn = _make_conn([
-        {"slug": "a", "val": "10"},
-        {"slug": "b", "val": "20"},
-        {"slug": "c", "val": "30"},
-    ])
+    conn = _make_conn(
+        [
+            {"slug": "a", "val": "10"},
+            {"slug": "b", "val": "20"},
+            {"slug": "c", "val": "30"},
+        ]
+    )
     cfg = {
-        "big": {"sql": 'SELECT * FROM items WHERE CAST(val AS INTEGER) > {{ threshold }}'},
+        "big": {"sql": "SELECT * FROM items WHERE CAST(val AS INTEGER) > {{ threshold }}"},
     }
     runner = QueryRunner(conn, cfg)
     result = runner("big", threshold=15)
@@ -140,18 +138,22 @@ def test_query_caching():
 
 def test_query_cache_miss_on_different_params():
     """Different params produce separate cache entries."""
-    conn = _make_conn([
-        {"slug": "a", "val": "1"},
-        {"slug": "b", "val": "2"},
-    ])
+    conn = _make_conn(
+        [
+            {"slug": "a", "val": "1"},
+            {"slug": "b", "val": "2"},
+        ]
+    )
     cfg = {"q": {"sql": "SELECT * FROM items WHERE val = {{ v }}"}}
     runner = QueryRunner(conn, cfg)
 
     r1 = runner("q", v="1")
     r2 = runner("q", v="2")
 
-    assert len(r1) == 1 and r1[0]["slug"] == "a"
-    assert len(r2) == 1 and r2[0]["slug"] == "b"
+    assert len(r1) == 1
+    assert r1[0]["slug"] == "a"
+    assert len(r2) == 1
+    assert r2[0]["slug"] == "b"
 
 
 def test_query_unknown_name_returns_empty():
@@ -165,6 +167,7 @@ def test_query_unknown_name_returns_empty():
 def test_query_unknown_name_logs_warning(caplog):
     """Unknown query name emits a warning log."""
     import logging
+
     conn = _make_conn([])
     runner = QueryRunner(conn, {})
     with caplog.at_level(logging.WARNING, logger="krizky.query"):
@@ -183,10 +186,12 @@ def test_query_bad_sql_returns_empty():
 
 def test_query_key_returns_dict():
     """Při definovaném key vrátí query dict keyed by daný sloupec."""
-    conn = _make_conn([
-        {"slug": "a", "val": "1"},
-        {"slug": "b", "val": "2"},
-    ])
+    conn = _make_conn(
+        [
+            {"slug": "a", "val": "1"},
+            {"slug": "b", "val": "2"},
+        ]
+    )
     cfg = {"q": {"sql": "SELECT * FROM items", "key": "slug"}}
     runner = QueryRunner(conn, cfg)
     result = runner("q")
@@ -207,6 +212,7 @@ def test_query_without_key_returns_list():
 def test_query_bad_sql_logs_error(caplog):
     """Invalid SQL produces an error log entry."""
     import logging
+
     conn = _make_conn([{"slug": "a", "val": "1"}])
     cfg = {"broken": {"sql": "TOTALLY BROKEN {{ x }}"}}
     runner = QueryRunner(conn, cfg)
@@ -218,6 +224,7 @@ def test_query_bad_sql_logs_error(caplog):
 # ---------------------------------------------------------------------------
 # Integration: query() callable in Jinja2 template via build_site
 # ---------------------------------------------------------------------------
+
 
 def _make_db_file(db_path: Path, records: list[dict], table: str = "data") -> None:
     conn = sqlite3.connect(str(db_path))
@@ -249,8 +256,7 @@ def test_query_in_template(tmp_path: Path):
     templates_dir.mkdir()
     # Template calls query() with a threshold and renders matching slugs
     (templates_dir / "page.html").write_text(
-        "{% set res = query('big', threshold='15') %}"
-        "{% for r in res %}{{ r.slug }}{% endfor %}",
+        "{% set res = query('big', threshold='15') %}{% for r in res %}{{ r.slug }}{% endfor %}",
         encoding="utf-8",
     )
 
@@ -300,12 +306,12 @@ def test_query_in_detail_template(tmp_path: Path):
 
     conn = sqlite3.connect(str(sources_dir / "data.db"))
     conn.row_factory = sqlite3.Row
-    conn.execute('CREATE TABLE data (slug TEXT, ref TEXT)')
+    conn.execute("CREATE TABLE data (slug TEXT, ref TEXT)")
     for r in records:
-        conn.execute('INSERT INTO data VALUES (?, ?)', [r["slug"], r["ref"]])
-    conn.execute('CREATE TABLE related (slug TEXT, ref TEXT)')
+        conn.execute("INSERT INTO data VALUES (?, ?)", [r["slug"], r["ref"]])
+    conn.execute("CREATE TABLE related (slug TEXT, ref TEXT)")
     for r in related:
-        conn.execute('INSERT INTO related VALUES (?, ?)', [r["slug"], r["ref"]])
+        conn.execute("INSERT INTO related VALUES (?, ?)", [r["slug"], r["ref"]])
     conn.commit()
     conn.close()
 
@@ -349,7 +355,7 @@ def test_query_in_detail_template(tmp_path: Path):
     build_site(config, config_dir=tmp_path)
 
     out_a = (output_dir / "main-a.html").read_text(encoding="utf-8")
-    assert "main-a:rel-x" == out_a
+    assert out_a == "main-a:rel-x"
 
     out_b = (output_dir / "main-b.html").read_text(encoding="utf-8")
-    assert "main-b:rel-y" == out_b
+    assert out_b == "main-b:rel-y"

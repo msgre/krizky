@@ -1,6 +1,5 @@
 """Fetching Google Sheets, Google Docs, and Google Drive photo metadata for krizky."""
 
-import json
 import subprocess
 import sys
 import urllib.error
@@ -18,11 +17,11 @@ class TransformError(Exception):
     """Raised when a transform script exits with a non-zero return code."""
 
 
-def fetch_sheet(id: str, gid: str, output_path: Path, skip_rows: int = 0) -> None:
+def fetch_sheet(sheet_id: str, gid: str, output_path: Path, skip_rows: int = 0) -> None:
     """Download a Google Sheet tab as CSV and write it to *output_path*.
 
     Args:
-        id: The Google Sheets document ID (from the URL).
+        sheet_id: The Google Sheets document ID (from the URL).
         gid: The tab/sheet ID (gid= parameter in the URL).
         output_path: Destination file path for the downloaded CSV.
         skip_rows: Number of leading rows to skip from the CSV content.
@@ -30,17 +29,17 @@ def fetch_sheet(id: str, gid: str, output_path: Path, skip_rows: int = 0) -> Non
     Raises:
         FetchError: If the HTTP request fails.
     """
-    url = f"https://docs.google.com/spreadsheets/d/{id}/export?format=csv&gid={gid}"
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
     try:
         with urllib.request.urlopen(url) as response:
             raw_bytes: bytes = response.read()
     except urllib.error.HTTPError as exc:
         raise FetchError(
-            f"HTTP error {exc.code} while fetching sheet id={id!r} gid={gid!r}: {exc.reason}"
+            f"HTTP error {exc.code} while fetching sheet id={sheet_id!r} gid={gid!r}: {exc.reason}"
         ) from exc
     except urllib.error.URLError as exc:
         raise FetchError(
-            f"URL error while fetching sheet id={id!r} gid={gid!r}: {exc.reason}"
+            f"URL error while fetching sheet id={sheet_id!r} gid={gid!r}: {exc.reason}"
         ) from exc
 
     content = raw_bytes.decode("utf-8")
@@ -52,28 +51,26 @@ def fetch_sheet(id: str, gid: str, output_path: Path, skip_rows: int = 0) -> Non
     output_path.write_text(content, encoding="utf-8")
 
 
-def fetch_doc(id: str, output_path: Path) -> None:
+def fetch_doc(doc_id: str, output_path: Path) -> None:
     """Download a Google Doc as DOCX and write it to *output_path*.
 
     Args:
-        id: The Google Docs document ID (from the URL).
+        doc_id: The Google Docs document ID (from the URL).
         output_path: Destination file path for the downloaded DOCX.
 
     Raises:
         FetchError: If the HTTP request fails.
     """
-    url = f"https://docs.google.com/document/d/{id}/export?format=docx"
+    url = f"https://docs.google.com/document/d/{doc_id}/export?format=docx"
     try:
         with urllib.request.urlopen(url) as response:
             raw_bytes: bytes = response.read()
     except urllib.error.HTTPError as exc:
         raise FetchError(
-            f"HTTP error {exc.code} while fetching doc id={id!r}: {exc.reason}"
+            f"HTTP error {exc.code} while fetching doc id={doc_id!r}: {exc.reason}"
         ) from exc
     except urllib.error.URLError as exc:
-        raise FetchError(
-            f"URL error while fetching doc id={id!r}: {exc.reason}"
-        ) from exc
+        raise FetchError(f"URL error while fetching doc id={doc_id!r}: {exc.reason}") from exc
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(raw_bytes)
@@ -114,10 +111,7 @@ def run_transform(
         stderr=sys.stderr,
     )
     if result.returncode != 0:
-        raise TransformError(
-            f"Transform script '{script}' exited with code {result.returncode}"
-        )
-
+        raise TransformError(f"Transform script '{script}' exited with code {result.returncode}")
 
 
 def fetch_sources(config: dict, config_dir: Path, transform: bool = False, pm=None) -> None:

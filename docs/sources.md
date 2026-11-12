@@ -265,6 +265,7 @@ cat $SCRIPT_DIR/data/slug_type.py | \
 # slug_type.py
 from common import slugify
 
+
 def convert(value):
     return f"kategorie-{slugify(value)}"
 ```
@@ -305,9 +306,7 @@ db = sqlite_utils.Database(db_path)
 with db.conn:
     safe_table_name = db.quote(table_name)
     db.register_function(generate_slug, name="generate_slug_fn")
-    db.execute(
-        f"UPDATE {safe_table_name} SET slug = generate_slug_fn(nazev, latitude, longitude)"
-    )
+    db.execute(f"UPDATE {safe_table_name} SET slug = generate_slug_fn(nazev, latitude, longitude)")
 ```
 
 ---

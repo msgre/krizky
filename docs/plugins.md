@@ -11,6 +11,7 @@ Plugin je Python objekt (instance třídy nebo modul) s metodami dekorovanými `
 ```python
 from krizky.hooks import hookimpl
 
+
 class MyPlugin:
     @hookimpl
     def prepare_jinja2_environment(self, env, config):
@@ -20,6 +21,7 @@ class MyPlugin:
     def after_page_written(self, page_cfg, html_path, output_dir, records, config):
         # např. aktualizovat search index
         pass
+
 
 plugin = MyPlugin()
 ```
@@ -105,6 +107,7 @@ def register_page_processor(self, page_cfg):
         return self._render_feed
     return None
 
+
 def _render_feed(self, page_cfg, template, ctx):
     # vlastní logika renderování
     pass
@@ -128,6 +131,7 @@ def after_page_written(self, page_cfg, html_path, output_dir, records, config):
     # zapsat CSV sidecar soubor
     import csv
     from pathlib import PurePosixPath
+
     out = output_dir / "exports" / PurePosixPath(html_path.lstrip("/")).with_suffix(".csv")
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="", encoding="utf-8") as f:

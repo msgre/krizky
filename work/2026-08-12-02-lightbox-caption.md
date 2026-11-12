@@ -13,9 +13,9 @@ Nový volitelný sloupec v hlavní DB tabulce `record.autori_fotek`:
 
 ```python
 {
-  "0": {"autor": "Jan Novak", "vytvoreno": date(2013, 12, 10)},   # primary
-  "1": {"autor": "Petr Svoboda", "vytvoreno": date(2015, 5, 3)},  # 007-1
-  "2": {"autor": "Jan Novak", "vytvoreno": date(2014, 3, 22)},    # 007-2
+    "0": {"autor": "Jan Novak", "vytvoreno": date(2013, 12, 10)},  # primary
+    "1": {"autor": "Petr Svoboda", "vytvoreno": date(2015, 5, 3)},  # 007-1
+    "2": {"autor": "Jan Novak", "vytvoreno": date(2014, 3, 22)},  # 007-2
 }
 ```
 

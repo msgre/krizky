@@ -2,7 +2,12 @@
 
 import jinja2
 
-from krizky.db import fetch_by_category, fetch_by_tag, fetch_distinct_categories, fetch_distinct_tags
+from krizky.db import (
+    fetch_by_category,
+    fetch_by_tag,
+    fetch_distinct_categories,
+    fetch_distinct_tags,
+)
 from krizky.pages.base import RenderContext, fire_after_page_written, resolve_page_site
 from krizky.render import render_config_str, render_paginated
 
@@ -29,14 +34,28 @@ def render(page_cfg: dict, template: jinja2.Template, ctx: RenderContext) -> Non
 
     tables = ctx.base_ctx["tables"]
     for cat_val, cat_slug in fetch_cats(ctx.conn, ctx.main_table, cat_col, slug_col, condition):
-        filtered = fetch_recs(ctx.conn, ctx.main_table, order_by, ordering, cat_col, cat_val, condition, limit)
+        filtered = fetch_recs(
+            ctx.conn, ctx.main_table, order_by, ordering, cat_col, cat_val, condition, limit
+        )
         cat_dict = {"value": cat_val, "slug": cat_slug}
         path = render_config_str(page_cfg["path"], category=cat_dict, tables=tables)
-        site_ctx = resolve_page_site(ctx.base_ctx["site"], page_cfg, tables=tables, category=cat_dict)
+        site_ctx = resolve_page_site(
+            ctx.base_ctx["site"], page_cfg, tables=tables, category=cat_dict
+        )
         render_paginated(
-            template, filtered, path, ctx.output_dir, ctx.paginate_by,
-            {**ctx.base_ctx, "category": cat_dict, "site": site_ctx,
-             "head_injections": ctx.head_injections, "body_end_injections": ctx.body_end_injections},
-            window=ctx.pagination_window, boundary=ctx.pagination_boundary,
+            template,
+            filtered,
+            path,
+            ctx.output_dir,
+            ctx.paginate_by,
+            {
+                **ctx.base_ctx,
+                "category": cat_dict,
+                "site": site_ctx,
+                "head_injections": ctx.head_injections,
+                "body_end_injections": ctx.body_end_injections,
+            },
+            window=ctx.pagination_window,
+            boundary=ctx.pagination_boundary,
         )
         fire_after_page_written(ctx, page_cfg, path, filtered)

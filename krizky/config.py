@@ -71,7 +71,9 @@ def load_config(path: str) -> dict:
         raise ConfigError(f"Failed to parse YAML configuration: {exc}") from exc
 
     if not isinstance(raw, dict):
-        raise ConfigError(f"Configuration file must contain a YAML mapping, got: {type(raw).__name__}")
+        raise ConfigError(
+            f"Configuration file must contain a YAML mapping, got: {type(raw).__name__}"
+        )
 
     return _substitute_env(raw)
 
@@ -128,14 +130,10 @@ def validate_config(config: dict, config_dir: Path | None = None) -> None:
     for name, tbl in tables.items():
         transform = tbl.get("transform")
         if not transform:
-            raise ConfigError(
-                f"Table '{name}' is missing required attribute 'transform'"
-            )
+            raise ConfigError(f"Table '{name}' is missing required attribute 'transform'")
         script_path = resolve(transform)
         if not script_path.exists():
-            raise ConfigError(
-                f"Transform script for table '{name}' does not exist: {script_path}"
-            )
+            raise ConfigError(f"Transform script for table '{name}' does not exist: {script_path}")
 
     # Validate docs entries
     docs = sources.get("docs") or {}
@@ -143,13 +141,9 @@ def validate_config(config: dict, config_dir: Path | None = None) -> None:
         if not isinstance(doc, dict):
             raise ConfigError(f"docs entry '{name}' must be a mapping")
         if "transform" not in doc:
-            raise ConfigError(
-                f"docs entry '{name}' is missing required attribute 'transform'"
-            )
+            raise ConfigError(f"docs entry '{name}' is missing required attribute 'transform'")
         if "output" not in doc:
-            raise ConfigError(
-                f"docs entry '{name}' is missing required attribute 'output'"
-            )
+            raise ConfigError(f"docs entry '{name}' is missing required attribute 'output'")
         transform = doc.get("transform")
         if transform:
             script_path = resolve(transform)

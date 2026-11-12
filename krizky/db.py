@@ -4,7 +4,6 @@ import json
 import sqlite3
 from typing import Any
 
-
 DEFAULT_ORDER_BY = "rowid"
 DEFAULT_ORDERING = "asc"
 
@@ -95,7 +94,10 @@ def fetch_distinct_categories(
         f" WHERE {' AND '.join(where_parts)}"
         f" ORDER BY {_trim(cat_col)}"
     )
-    return [(row[0].strip() if row[0] else "", row[1].strip() if row[1] else "") for row in conn.execute(sql).fetchall()]
+    return [
+        (row[0].strip() if row[0] else "", row[1].strip() if row[1] else "")
+        for row in conn.execute(sql).fetchall()
+    ]
 
 
 def fetch_distinct_tags(
@@ -200,7 +202,9 @@ def fetch_by_tag(
         condition: Optional additional SQL WHERE clause.
         limit: Optional maximum number of rows to return.
     """
-    where_parts = [f"EXISTS (SELECT 1 FROM json_each([{cat_col}]) je WHERE TRIM(je.value, {_SQL_TRIM_WS}) = ?)"]
+    where_parts = [
+        f"EXISTS (SELECT 1 FROM json_each([{cat_col}]) je WHERE TRIM(je.value, {_SQL_TRIM_WS}) = ?)"
+    ]
     if condition:
         where_parts.append(f"({condition})")
     sql = (

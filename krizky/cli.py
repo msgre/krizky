@@ -1,7 +1,6 @@
 """Click CLI entry point for krizky."""
 
 import logging
-import shutil
 from pathlib import Path
 
 import click
@@ -154,6 +153,7 @@ CF_SECRET_ACCESS_KEY=
 # CLI definition
 # ---------------------------------------------------------------------------
 
+
 @click.group()
 @click.option(
     "--config",
@@ -172,6 +172,7 @@ def cli(ctx: click.Context, config: str) -> None:
 # validate
 # ---------------------------------------------------------------------------
 
+
 @cli.command()
 @click.pass_context
 def validate(ctx: click.Context) -> None:
@@ -183,7 +184,7 @@ def validate(ctx: click.Context) -> None:
     except ConfigError as exc:
         click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
         raise SystemExit(1) from None
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         click.echo(click.style(f"ERROR: {exc}", fg="red"))
         raise SystemExit(1) from None
 
@@ -193,6 +194,7 @@ def validate(ctx: click.Context) -> None:
 # ---------------------------------------------------------------------------
 # init
 # ---------------------------------------------------------------------------
+
 
 @cli.command()
 @click.argument("directory", default=".", type=click.Path())
@@ -236,13 +238,16 @@ def init(directory: str) -> None:
 # fetch group
 # ---------------------------------------------------------------------------
 
+
 @cli.group()
 def fetch() -> None:
     """Fetch data from remote sources."""
 
 
 @fetch.command("sources")
-@click.option("--transform", is_flag=True, default=False, help="Run transform scripts after fetching.")
+@click.option(
+    "--transform", is_flag=True, default=False, help="Run transform scripts after fetching."
+)
 @click.pass_context
 def fetch_sources(ctx: click.Context, transform: bool) -> None:
     """Download tables and documents from Google."""
@@ -254,8 +259,10 @@ def fetch_sources(ctx: click.Context, transform: bool) -> None:
         click.echo(click.style(f"ERROR: {exc.message}", fg="red"))
         raise SystemExit(1) from None
 
-    from krizky.fetch import FetchError, TransformError, fetch_sources as _fetch_sources
+    from krizky.fetch import FetchError, TransformError
+    from krizky.fetch import fetch_sources as _fetch_sources
     from krizky.plugin_manager import get_plugin_manager
+
     try:
         click.echo("Fetching sources...")
         config_dir = Path(config_path).parent
@@ -271,9 +278,14 @@ def fetch_sources(ctx: click.Context, transform: bool) -> None:
 # build group
 # ---------------------------------------------------------------------------
 
+
 @cli.group(invoke_without_command=True)
-@click.option("--force", is_flag=True, default=False, help="Skip change detection, force full rebuild.")
-@click.option("--dry-run", is_flag=True, default=False, help="Show what would happen without doing it.")
+@click.option(
+    "--force", is_flag=True, default=False, help="Skip change detection, force full rebuild."
+)
+@click.option(
+    "--dry-run", is_flag=True, default=False, help="Show what would happen without doing it."
+)
 @click.pass_context
 def build(ctx: click.Context, force: bool, dry_run: bool) -> None:
     """Build the site (complete build)."""
@@ -282,9 +294,19 @@ def build(ctx: click.Context, force: bool, dry_run: bool) -> None:
 
 
 @build.command("site")
-@click.option("--force", is_flag=True, default=False, help="Skip change detection, force full rebuild.")
-@click.option("--dry-run", is_flag=True, default=False, help="Show what would happen without doing it.")
-@click.option("--verbose", "-v", is_flag=True, default=False, help="Show debug info (resolved paths, loaded files, …).")
+@click.option(
+    "--force", is_flag=True, default=False, help="Skip change detection, force full rebuild."
+)
+@click.option(
+    "--dry-run", is_flag=True, default=False, help="Show what would happen without doing it."
+)
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Show debug info (resolved paths, loaded files, …).",
+)
 @click.pass_context
 def build_site(ctx: click.Context, force: bool, dry_run: bool, verbose: bool) -> None:
     """Generate HTML pages from existing database."""
@@ -306,10 +328,16 @@ def build_site(ctx: click.Context, force: bool, dry_run: bool, verbose: bool) ->
         click.echo(f"  config dir:      {config_dir}")
         click.echo(f"  sources output:  {sources_output}")
         click.echo(f"  photos dir:      {photos_dir}")
-        click.echo(f"  cf_metadata:     {photos_dir / 'cf_metadata.json'} {'✓' if (photos_dir / 'cf_metadata.json').exists() else '✗ MISSING'}")
-        click.echo(f"  focal_points:    {photos_dir / 'focal_points.json'} {'✓' if (photos_dir / 'focal_points.json').exists() else '✗ MISSING'}")
+        click.echo(
+            f"  cf_metadata:     {photos_dir / 'cf_metadata.json'} {'✓' if (photos_dir / 'cf_metadata.json').exists() else '✗ MISSING'}"
+        )
+        click.echo(
+            f"  focal_points:    {photos_dir / 'focal_points.json'} {'✓' if (photos_dir / 'focal_points.json').exists() else '✗ MISSING'}"
+        )
 
-    from krizky.site import SiteError, build_site as _build_site
+    from krizky.site import SiteError
+    from krizky.site import build_site as _build_site
+
     try:
         click.echo("Building site...")
         _build_site(config, config_dir=Path(config_path).parent)
@@ -326,4 +354,5 @@ def build_site(ctx: click.Context, force: bool, dry_run: bool, verbose: bool) ->
 # ---------------------------------------------------------------------------
 
 from krizky.plugin_manager import get_plugin_manager as _get_pm  # noqa: E402
+
 _get_pm().hook.register_commands(cli=cli)

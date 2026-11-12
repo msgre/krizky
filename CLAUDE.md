@@ -1,8 +1,40 @@
 # CLAUDE.md — instrukce pro Claude Code
 
+Core [krizky](https://github.com/msgre/krizky): univerzální generátor statických webů z Google Sheets, Google Docs a fotek na Google Drive. Data stahuje do SQLite a renderuje přes Jinja2 šablony do statického HTML. Rozšiřuje se pluginy přes pluggy (`krizky/hooks.py`). Pluginy (`krizky-filters`, `krizky-json`, `krizky-map`, `krizky-photos`, `krizky-share`) jsou samostatná repa vedle core v `/Users/msgre/projects/muzeum/krizky-*` a core berou z GitHubu přes `uv.lock`.
+
+## Ověření: jediná brána „hotovo“
+
+```bash
+scripts/verify
+```
+
+Skript spustí `uv sync`, `ruff check`, `ruff format --check` a `pytest`. Na obrazovku vypíše jen souhrn, celé výstupy jsou v `.verify-logs/`. Hotovo je až tehdy, když skončí s exit 0. Pokud selže, oprav příčinu. Pravidla v `pyproject.toml` ani v samotném skriptu kvůli tomu neměň.
+
+Opravy lintu a formátu: `uv run ruff check --fix .`, `uv run ruff format .`.
+
+## Pravidla projektu
+
+Guidelines jsou společné pro core i všechny pluginy a leží v `docs/guidelines/`. Před změnou si přečti ty, které se jí týkají:
+
+- `python.md`: styl, logging, testy. `from __future__ import annotations` je zakázaný, hlídá to ruff (TID251).
+- `docs-sync.md`: když se změní chování nebo konfigurace, aktualizuj i `docs/*.md`, `README.md` a tabulky konvencí šablon níže v tomhle souboru.
+- `security.md`
+
+## Git
+
+- Do `main` nikdy necommituj ani nepushuj. Práce jde přes větve `swarm/<heslo>` a PR.
+- Commity jsou česky, s volitelným prefixem `feat:`, `fix:` nebo `refactor:`.
+
+## Swarm
+
+- Log běhu: `work/<YYYY-MM-DD>-<NN>-<heslo>.md` v tomhle repu. `NN` začíná každý den od `01` (podívej se, co už v adresáři je).
+- Po zapsání logu přidej řádek do tabulky „Stav fází“ ve `work/OVERVIEW.md` se stavem a odkazem na log.
+- Log a `OVERVIEW.md` commitni do integrační větve `swarm/<heslo>` a pushni ji ještě před otevřením finálního PR. Do `main` se dostanou s ním, přímý push do `main` ruleset nepustí.
+- Agenti tiketů do `work/` ani do `OVERVIEW.md` nepíšou. Pravidlo z následující sekce za ně plní jeden log za celý běh.
+
 ## Po každé implementační session
 
-Po dokončení implementace (nebo na konci session s uživatelem) **vždy**:
+Mimo swarm, po dokončení implementace (nebo na konci session s uživatelem) **vždy**:
 
 1. **Vytvoř nebo aktualizuj log soubor** ve složce `work/`:
    - Název: `work/YYYY-MM-DD-NN-HESLO.md` (NN = pořadí ten den od 01, HESLO = kebab-case anglické shrnutí)
@@ -19,7 +51,7 @@ Po dokončení implementace (nebo na konci session s uživatelem) **vždy**:
 
 - Projekt je dokumentován v `work/OVERVIEW.md` a `PLAN.md`
 - Kód je v `krizky/` package, testy v `tests/`
-- Spouštění testů: `uv run pytest` nebo `python -m pytest`
+- Spouštění testů: `uv run pytest` nebo `python -m pytest`; celá kontrola přes `scripts/verify`
 - Konfigurace se načítá z `config.yaml` (vzorový soubor generuje `krizky init`)
 
 ## Konvence šablon (aktuální stav)
