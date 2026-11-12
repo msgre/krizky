@@ -24,6 +24,12 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | —    | Focal points — konfigurovatelná cesta + runtime JS pro filters | DONE | [2026-08-12-01-focal-points-configurable-and-js.md](2026-08-12-01-focal-points-configurable-and-js.md) |
 | —    | Lightbox caption per fotka (šablona + JS v projektu) | DONE | [2026-08-12-02-lightbox-caption.md](2026-08-12-02-lightbox-caption.md) |
 | —    | Plugin krizky-share (OG / Twitter meta, Schema.org, sdílecí widget) + `absolute_url` v core | DONE | [2026-08-14-01-share-plugin.md](2026-08-14-01-share-plugin.md) |
+| —    | Plugin krizky-map (Leaflet: detail / list / full, cluster, filter integration, mask, overlays) | DONE | [2026-08-15-01-map-plugin.md](2026-08-15-01-map-plugin.md) |
+| —    | Review konzistence napříč core + pluginy + implementace blockerů | IN PROGRESS | [2026-10-08-01-pending-review-findings.md](2026-10-08-01-pending-review-findings.md) |
+| —    | Swarm naming-logger (přejmenování FiltersPlugin, logger) | DONE (krizky-filters PR #4 sloučen, retro hotové) | [2026-11-09-01-naming-logger.md](2026-11-09-01-naming-logger.md) · [2026-11-10-01-naming-logger.md](2026-11-10-01-naming-logger.md) |
+| —    | Swarm js-only-widget (filtrovací widget jen s JS) | DONE (krizky-filters PR #7 sloučen) | [2026-11-11-01-js-only-widget.md](2026-11-11-01-js-only-widget.md) |
+| —    | /swarm:init a příprava krizky-map pro swarm | DONE (map, photos, share a json připravené, PR #1 sloučeny; kontrola všech pluginů 2026-11-12) | [2026-11-11-02-swarm-init-map.md](2026-11-11-02-swarm-init-map.md) |
+| —    | Úklid core a přesun pluginů vedle core (příprava core pro swarm) | IN PROGRESS (pluginy přesunuté; PR `core-cleanup`; otevřené: skilly a reporty) | [2026-11-12-01-core-cleanup.md](2026-11-12-01-core-cleanup.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 
