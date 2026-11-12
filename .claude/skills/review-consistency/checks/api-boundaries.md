@@ -31,18 +31,19 @@ Tento check je nejdůležitější — uživatel na něj výslovně upozornil.
 
 ## Checklist — plugin vs uživatelský projekt (project-specific leakage)
 
-**Uživatel má vlastní web (v tomto workspace pravděpodobně `../mujpivo` nebo obdoba), který si instaluje `krizky` + pluginy a dodává:**
+**Uživatel má vlastní web (`../valasske_nebe_ng/`), který si instaluje `krizky` + pluginy a dodává:**
 - svůj `config.yaml`
 - svoje `templates/` (přepisy nebo vlastní stránky)
-- svoji `sources/` (data)
-- svoje `plugins/` (per-project pluginy)
+- svoji `sources/` (data) a `transforms/` (skripty, které je převádějí)
+- svoje `assets/`
+- volitelně svoje `plugins/*.py` (per-project pluginy, core je načte z `<config_dir>/plugins/`)
 
 **Plugin má být obecný.** Nesmí obsahovat věci vázané na jeden konkrétní web.
 
 Zaznamenej jako **blocker** cokoli z těchto vzorců:
 
 - [ ] Hardcoded slug nebo název záznamu (`if record["slug"] == "svaty-jan": ...`) v plugin kódu.
-- [ ] Hardcoded config klíč, který dává smysl jen pro jeden web (`config["mujpivo"]["nazev"]`).
+- [ ] Hardcoded config klíč, který dává smysl jen pro jeden web (`config["valasske_nebe"]["nazev"]`).
 - [ ] Šablona v pluginu s obsahem specifickým pro jeden web (např. footer s "Copyright Michal 2026", CTA na konkrétní e-shop).
 - [ ] URL / doménové jméno hardcoded v Pythonu nebo JS (mimo příkladů v README).
 - [ ] Konkrétní SQL query hardcoded, která reflektuje uživatelovo schéma dat (např. `SELECT nazev, latitude FROM mista_v_krkonosich`).
@@ -70,5 +71,5 @@ Ve zjištění uveď konkrétní doporučení, ne jen "je to špatně".
 
 ## Zvláštní pozornost
 
-- **Historický kontext:** photos byl původně builtin, teď je oddělený plugin. Zkontroluj, jestli v core nezůstaly artefakty (`# JsonExportPlugin moved to krizky-json package.` — takové komentáře jsou OK jako TODO markery, ale pokud tam zůstal i mrtvý kód, → dead-code check.
+- **Historický kontext:** json a photos byly původně builtin (`JsonExportPlugin`, `PhotosPlugin`), teď jsou oddělené pluginy. V core po nich zůstaly komentáře v `krizky/plugin_manager.py` a `krizky/builtin_plugins.py`. Komentáře jsou OK jako TODO markery, ale pokud tam zůstal i mrtvý kód, → dead-code check.
 - **Sanity check:** pokud plugin importuje `krizky.render.render_html` (fiktivní příklad) a jiný plugin importuje `krizky.render.render`, ale oba dělají totéž — jde o výběr veřejného API core → doporuč sjednotit.

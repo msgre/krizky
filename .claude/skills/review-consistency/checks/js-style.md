@@ -6,13 +6,15 @@ Cíl: JS napříč pluginy vypadá jako od jednoho autora a je konzistentní se 
 
 JS je vždy doplněk konkrétního Python pluginu. Neexistuje sdílený JS core. Native JS (žádný build step, žádný framework). Assety jsou typicky pod `<plugin>/assets/<plugin-name>/*.js`.
 
+Pravidla jsou v `docs/guidelines/javascript.md` a `cross-language.md`. Pluginy s JS mají stejný `eslint.config.mjs` a `.prettierrc.json` a obojí hlídá `scripts/verify`. Co vynucuje ESLint (`no-var`, `prefer-const`, `prefer-arrow-callback`, `prefer-template`, `eqeqeq`, `curly`, `no-console`, `no-implicit-globals`) nebo Prettier, nehlas.
+
 **Vazba na Python:** JS často čte konfiguraci vloženou Python stranou (např. `<script type="application/json" id="filter-config">`), reaguje na data-atributy vygenerované šablonami, nebo používá globální objekty vložené `inject_head` hookem (např. `window.krizkyPhotos`). Konzistence názvů mezi Pythonem a JS je zásadní.
 
 ## Postup
 
 1. Najdi všechny JS soubory v pluginech (mimo `.venv/` a `node_modules/`):
    ```bash
-   find _plugins -name "*.js" -not -path "*/.venv/*" -not -path "*/node_modules/*"
+   find ../krizky-* -name "*.js" -not -path "*/.venv/*" -not -path "*/node_modules/*"
    ```
 2. Přečti hlavičku a top-level strukturu každého (typicky do 100 řádků stačí).
 3. Projdi checklist.
@@ -25,9 +27,7 @@ JS je vždy doplněk konkrétního Python pluginu. Neexistuje sdílený JS core.
 - [ ] Header komentář: co dělá, jaké data-atributy hostí, jaké elementy hledá. Konzistentní formát?
 
 ### Language features
-- [ ] `var` / `let` / `const` — konzistentní policy? (Existující kód mixuje — `const` pro top-level konstanty, `let` pro reassign, ale i `var` uvnitř starších funkcí.)
-- [ ] Arrow functions vs `function` — kdy? `document.querySelectorAll(...).forEach(function(x) {...})` vs `(x) => {...}`.
-- [ ] Template literals vs string concatenation — konzistentní volba?
+- [ ] `var` / `let` / `const`, arrow callbacks a template literals vynucuje ESLint. Hlas jen to, co lint nepokryje (např. pojmenované funkce vs arrow přiřazené do `const`).
 - [ ] Optional chaining `?.` / nullish coalescing `??` — používá se jednotně?
 - [ ] `for...of` vs `forEach` vs `Array.from(...).map` — konzistentně?
 
@@ -50,7 +50,7 @@ JS je vždy doplněk konkrétního Python pluginu. Neexistuje sdílený JS core.
 - [ ] Fail-safe: co dělá plugin, když config chybí? (`filters.js` early-returns tiše — dělají to všichni, nebo někdo hodí chybu do konzole?)
 - [ ] Naming klíčů v injected JSON — camelCase (JS konvence) nebo snake_case (Python konvence)? Konzistentní?
 
-### Vazba Python ↔ JS
+### Vazba Python ↔ JS (viz `cross-language.md`)
 - [ ] Klíče v injected configu odpovídají Python config klíčům, nebo se transformují? Konzistentní pravidlo?
 - [ ] Data-atributy generuje Jinja šablona — jméno se shoduje s tím, co JS čte? (`data-share-url` v šabloně → `dataset.shareUrl` v JS.)
 - [ ] Prefix atributů (`data-<plugin>-*`) — konzistentně?
@@ -65,10 +65,7 @@ JS je vždy doplněk konkrétního Python pluginu. Neexistuje sdílený JS core.
 - [ ] Nezávislost na JS (základní funkčnost bez JS) — respektováno konzistentně?
 
 ### Formátování
-- [ ] Odsazení: 2 mezery vs 4 — konzistentní?
-- [ ] Uvozovky: `'single'` vs `"double"` — sjednocené?
-- [ ] Trailing semicolons — všude nebo nikde?
-- [ ] Linter/formatter (prettier, eslint) — nakonfigurovaný?
+- [ ] Odsazení, uvozovky a středníky hlídá Prettier přes `scripts/verify`. Hlas jen plugin s JS bez ESLint a Prettier, nebo rozdíl v jejich konfiguraci mezi pluginy.
 
 ## Zvláštní pozornost
 

@@ -9,7 +9,7 @@ Core i pluginy se konfigurují přes jediný `config.yaml`. Každý plugin má t
 ## Postup
 
 1. Vypiš top-level klíče, které core čte (grep `config.get(` v `krizky/`).
-2. Pro každý plugin vypiš top-level klíče, které čte (grep `config.get(` a `photos_cfg.get(` apod. v `_plugins/<name>/`).
+2. Pro každý plugin vypiš top-level klíče, které čte (grep `config.get(` a `photos_cfg.get(` apod. v `../krizky-<name>/`).
 3. Zkontroluj níže uvedené checklisty. Zaznamenej zjištění per plugin.
 4. Pokud najdeš ≥3 konzistentních konvencí, vygeneruj draft `proposals/config-style-guide.md`.
 

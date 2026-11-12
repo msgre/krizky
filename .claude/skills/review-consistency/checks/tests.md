@@ -15,6 +15,7 @@ Cíl: konzistentní struktura, styl a rozsah testů napříč projekty.
 - [ ] `tests/` adresář v rootu každého projektu — všude?
 - [ ] Zrcadlení struktury source kódu (`tests/test_render.py` ↔ `krizky/render.py`) — dodržené konzistentně?
 - [ ] Podskupiny (unit vs integration, `tests/unit/`, `tests/integration/`) — všude nebo nikde?
+- [ ] JS testy: `tests/js/*.test.mjs` přes `node --test`, jen čisté funkce (DOM se netestuje) — dodržené v pluginech s JS?
 
 ### Naming testů
 - [ ] Test soubory: `test_<module>.py` — konzistentní?
@@ -42,8 +43,10 @@ Cíl: konzistentní struktura, styl a rozsah testů napříč projekty.
 - [ ] Testovací data — inline v testech, `tests/fixtures/`, `tests/data/` — kde konzistentně?
 - [ ] Velké fixture soubory (JSON, YAML, HTML) — jednotné umístění napříč pluginy?
 
-### CI
-- [ ] Existuje `.github/workflows/*.yml` (nebo obdoba)? Je to sjednocené napříč pluginy?
+### Brána `scripts/verify`
+CI zatím není. Jedinou bránou je `scripts/verify` v každém repu.
+- [ ] Spouští `verify` ve všech repech totéž (ruff, pytest; s JS i ESLint, Prettier a `node --test`)?
+- [ ] Pluginy se testují proti core z GitHubu podle `uv.lock`. Je revize `krizky` v `uv.lock` stejná napříč pluginy?
 
 ### Značky
 - [ ] `@pytest.mark.slow`, `@pytest.mark.integration` — registrované v konfigu, používané konzistentně?

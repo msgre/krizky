@@ -21,20 +21,21 @@ Extended checks (all opt-in by topic): config style, error/logging, data naming,
 
 ## Discovery: what projects exist
 
-Currently all projects live side-by-side under the working directory (they'll eventually split into separate repos — the skill must not depend on that being permanent).
+Run the skill from the core repo (`/Users/msgre/projects/muzeum/krizky`). Every project is a separate git repo with its own GitHub remote (`github.com/msgre/krizky*`). Plugins live next to core, not inside it.
 
 Discovery rule:
 
-- **Core** = the directory containing `krizky/hooks.py` (the pluggy hookspec definitions). Also has `krizky/plugin_manager.py`. Typical name: `krizky/`.
-- **Plugins** = directories under `_plugins/` (or wherever the user points), each containing a `pyproject.toml` with a `[project.entry-points."krizky"]` section pointing at a `plugin` object.
+- **Core** = the current repo. It contains `krizky/hooks.py` (the pluggy hookspec definitions) and `krizky/plugin_manager.py`.
+- **Plugins** = sibling directories `../krizky-*/` (or wherever the user points), each containing a `pyproject.toml` with a `[project.entry-points."krizky"]` section pointing at a `plugin` object.
+- **User site** = `../valasske_nebe_ng/`, a real website built with core and all plugins. Don't review it. Use it as context for how the API is actually consumed (its `config.yaml`, `templates/`, `assets/`), especially before calling something dead code or project-specific.
 
 Run this to enumerate:
 
 ```bash
-# Core
-grep -l 'HookspecMarker("krizky")' -r . --include='*.py' 2>/dev/null | head -5
+# Core (prints krizky/hooks.py)
+grep -l 'HookspecMarker("krizky")' -r krizky --include='*.py'
 # Plugins
-grep -l 'entry-points."krizky"' -r . --include='pyproject.toml' 2>/dev/null
+grep -l 'entry-points."krizky"' ../krizky-*/pyproject.toml
 ```
 
 If the user passed an argument (e.g. `/review-consistency krizky-photos`), narrow the **reporting focus** to that project — but you still read core + all other plugins as context, because consistency is a cross-project property.
@@ -45,9 +46,12 @@ Before running any check, load these into your context (they're the yardstick ag
 
 1. `krizky/hooks.py` — the plugin API surface (hookspecs, signatures, docs).
 2. `krizky/plugin_manager.py` — how plugins are discovered/loaded.
-3. `krizky/CLAUDE.md` and `krizky/README.md` — project conventions.
-4. Each plugin's `plugin.py` (entry-point class) — how it wires into the API.
-5. Each plugin's `README.md` and (if present) `CLAUDE.md`, `PLAN.md`.
+3. `docs/guidelines/*.md` — the agreed conventions for core and all plugins (`python.md`, `javascript.md`, `cross-language.md`, `docs-sync.md`, `security.md`). They outrank anything inferred from code.
+4. Core `CLAUDE.md` and `README.md` — project conventions.
+5. Each plugin's `plugin.py` (entry-point class) — how it wires into the API.
+6. Each plugin's `README.md`, `CLAUDE.md` and (if present) `docs/`.
+
+Lint and formatting are enforced mechanically. Every repo prepared for swarm has `scripts/verify` with the same ruff config, and plugins with JS also the same ESLint and Prettier config. Don't report what those tools already enforce. Flag only a repo whose config differs from the others or that lacks `scripts/verify`.
 
 ## Severity
 
@@ -61,9 +65,10 @@ Every finding gets one of three tags. Pick conservatively — inflating severity
 
 When two projects disagree, decide as follows:
 
-1. **Core precedent wins.** If the pattern exists in `krizky/`, that's the canonical form; plugins should conform.
-2. **If it exists only in plugins:** don't pick a winner. Describe both variants neutrally, name each variant, and propose one as canonical in a `proposals/` document — but leave the final call to the user.
-3. **Never invent a new convention** the user hasn't already used somewhere. This skill is about aligning what exists, not inventing style.
+1. **Guidelines win.** If `docs/guidelines/` decides the question, that's the canonical form. Flag deviations, don't reopen the decision.
+2. **Core precedent wins next.** If the pattern exists in `krizky/`, that's the canonical form; plugins should conform.
+3. **If it exists only in plugins:** don't pick a winner. Describe both variants neutrally, name each variant, and propose one as canonical in a `proposals/` document — but leave the final call to the user.
+4. **Never invent a new convention** the user hasn't already used somewhere. This skill is about aligning what exists, not inventing style.
 
 ## Workflow
 
@@ -76,7 +81,7 @@ When two projects disagree, decide as follows:
 
 ## Report location
 
-Write reports to `reports/YYYY-MM-DD-HHMM/` under the working directory. Timestamped so re-runs don't overwrite. Create the directory if missing.
+Write reports to `reports/YYYY-MM-DD-HHMM/` in the core repo, where earlier reports are committed. Timestamped so re-runs don't overwrite. Create the directory if missing.
 
 Full layout:
 
@@ -97,10 +102,10 @@ See `report-format.md` for the exact structure of each file (headings, finding f
 
 ## What this skill does NOT do
 
-- **Does not modify code.** Reports only. If the user wants patches applied, they'll ask separately (probably a follow-up refactor session using the report as input).
+- **Does not modify code.** Reports only. Findings are implemented separately with `/swarm:run`, which can take a report from `reports/` as its input.
 - **Does not run tests** to determine correctness. Consistency ≠ correctness. If a pattern is inconsistent but both variants work, still flag it.
 - **Does not review clean code per se** (readability inside a single file, function length, complexity metrics). That's a separate, per-repo concern — a different skill.
-- **Does not touch `.venv/`, `__pycache__/`, or vendored third-party JS.** Skip those directories during discovery and grep.
+- **Does not touch `.venv/`, `__pycache__/`, `node_modules/`, or vendored third-party JS.** Skip those directories during discovery and grep.
 
 ## Output language
 
@@ -109,6 +114,6 @@ Write reports in **Czech** (the codebase's user-facing docs are Czech). Keep cod
 ## Notes on running
 
 - The skill is read-only w.r.t. code. Only writes are inside `reports/`.
-- When a plugin has no `CLAUDE.md` or `PLAN.md`, don't flag that as a finding unless docs consistency is the topic being reviewed.
+- `TODO.md` everywhere and `PLAN.md` in plugins are local notes listed in `.gitignore`. Don't flag their absence or content.
 - Don't create empty proposal files. `proposals/config-style-guide.md` only exists if the config check actually produced a coherent guide.
 - If the codebase has changed since the ground-truth was loaded (unlikely mid-run), re-read rather than assuming.

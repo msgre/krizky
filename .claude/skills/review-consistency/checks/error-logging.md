@@ -4,6 +4,8 @@ Cíl: chyby a logování vypadají stejně napříč projekty. Uživatel při č
 
 ## Postup
 
+Konvence loggeru a log zpráv jsou v `docs/guidelines/python.md` (sekce Logging): modul-level `_log = logging.getLogger(__name__)`, lazy `%s` formátování, ne `_log.error()` a `raise` současně. Odchylka od nich je zjištění, ne otázka.
+
 1. Grep `logging.getLogger`, `logger =`, `_log =` napříč všemi projekty.
 2. Grep `class .*Error`, `class .*Exception`, `raise ` — inventarizuj custom exceptions.
 3. Grep `click.ClickException`, `click.echo`, `sys.exit` — jak končí uživatelsky-viditelné chyby.

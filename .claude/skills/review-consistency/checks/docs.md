@@ -4,7 +4,7 @@ Cíl: každý projekt má stejnou "kostru" dokumentace, ve stejné hloubce. Čte
 
 ## Postup
 
-1. Vypiš dokumenty v rootu každého projektu (`README.md`, `CLAUDE.md`, `PLAN.md`, `TODO.md`, `docs/*`, `work/*`).
+1. Vypiš dokumenty v rootu každého projektu (`README.md`, `CLAUDE.md`, `docs/*`; v core navíc `PLAN.md` a `work/*`).
 2. Pro README: přečti nadpisy (`grep '^#' README.md`).
 3. Projdi checklist.
 
@@ -12,9 +12,9 @@ Cíl: každý projekt má stejnou "kostru" dokumentace, ve stejné hloubce. Čte
 
 ### Přítomnost základních dokumentů
 - [ ] `README.md` — má každý projekt.
-- [ ] `CLAUDE.md` — má každý projekt? (Core má; pluginy?)
-- [ ] `PLAN.md` — přítomen? Aktuální?
-- [ ] `TODO.md` vs GitHub issues — konzistentní volba?
+- [ ] `CLAUDE.md` — má každý projekt. Pluginy ho dostaly přes `/swarm:init` se stejnou kostrou (Ověření, Pravidla projektu, Git, Swarm).
+- [ ] `PLAN.md` — v core commitnutý: je aktuální? V pluginech je lokální a v `.gitignore`, nehlas.
+- [ ] `TODO.md` je všude lokální a v `.gitignore`, nehlas.
 - [ ] `LICENSE` — přítomná?
 - [ ] Změny (`CHANGELOG.md`, `HISTORY.md`) — existují? Konzistentní formát?
 
@@ -38,19 +38,20 @@ Odchylky → recommended.
 - [ ] Uživatelské docs (README, PLAN, docs/, work/) — český. Kód a docstringy — anglický. Ověř dodržení napříč pluginy.
 - [ ] Diakritika — správně, konzistentní?
 
-### `work/` log konvence (z CLAUDE.md)
+### `work/` log konvence
+Logy se píšou jen do core `work/`, i za práci v pluginech a za běhy swarmu. Pluginy vlastní `work/` nemají a jejich `CLAUDE.md` odkazuje na core.
 - [ ] Formát `work/YYYY-MM-DD-NN-HESLO.md` — dodržený?
 - [ ] `work/OVERVIEW.md` — aktualizovaná tabulka fází?
-- [ ] Používá to core a všechny pluginy stejně, nebo jen core?
+- [ ] `CLAUDE.md` každého pluginu odkazuje na core `work/` a `OVERVIEW.md` správnou cestou?
 
-### Aktuálnost vůči kódu
+### Aktuálnost vůči kódu (viz `docs-sync.md`)
 - [ ] README config example — je pořád validní vůči tomu, co plugin skutečně čte?
 - [ ] README CLI commands sekce — obsahuje všechny commands, které plugin registruje?
 - [ ] Docstring `KrizkySpec.<hook>` — reálná signatura hook implementací se shoduje?
 - [ ] Zmíněné funkce/makra existují (`_picture.html` makro popisované v README existuje)?
 
 ### Cross-reference
-- [ ] README pluginu odkazuje na krizky repo (např. `[krizky](https://github.com/...)`) — konzistentní link, správný URL?
+- [ ] README pluginu odkazuje na krizky repo — konzistentní link, správný URL (`https://github.com/msgre/krizky`)?
 - [ ] Core README zmiňuje ekosystém pluginů? Aktualizovaný seznam?
 
 ### Docstring vs README overlap
@@ -58,5 +59,5 @@ Odchylky → recommended.
 
 ## Zvláštní pozornost
 
-- **CLAUDE.md v pluginu:** pokud existuje, popisuje instrukce specifické pro plugin (např. jak testovat, co dělat po session). Konzistentní styl s core CLAUDE.md?
+- **CLAUDE.md v pluginu:** vychází ze šablony `/swarm:init`. Hlídej, aby úvodní odstavec popisoval daný plugin a cesty ke guidelines a `work/` seděly.
 - **README hlavičkový odstavec:** používají všechny pluginy shodnou formulaci "Plugin pro [X] do krizky"? Menší věc, ale recommended pro dojmovou konzistenci.

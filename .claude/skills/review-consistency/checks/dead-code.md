@@ -7,7 +7,7 @@ Pozor: dead code je snadné falešně detekovat (dynamic imports, hookspec bez i
 ## Postup
 
 ### Python
-1. Pro každý veřejný symbol (funkce, třída, konstanta) v pluginu i core: grep napříč celým workspace jestli ho někdo importuje/volá (kromě definice a testů).
+1. Pro každý veřejný symbol (funkce, třída, konstanta) v pluginu i core: grep napříč core, všemi `../krizky-*` a webem `../valasske_nebe_ng/`, jestli ho někdo importuje/volá (kromě definice a testů). Web volá veřejné API ze šablon a může mít vlastní `plugins/*.py`.
 2. Pro každý private symbol (`_foo`): grep uvnitř toho modulu.
 3. Pro každý test: koresponduje s existujícím kódem?
 4. Pro každý TODO/FIXME komentář starší než 3 měsíce (git blame): flag.
@@ -55,4 +55,4 @@ Pozor: dead code je snadné falešně detekovat (dynamic imports, hookspec bez i
 
 - **False positive risk:** entry-point pluginy jsou volané pluggym dynamicky. Grep nemusí najít volání `PhotosPlugin.__init__`, ale je používaný. Před flag zkontroluj entry-point definice v `pyproject.toml`.
 - **Nedávno přidaný kód:** git log — pokud byl symbol přidán v posledních 2 týdnech, možná je připravovaný pro brzké použití. Ne blocker, spíš nice-to-have s poznámkou "je to úmysl?".
-- Kód ve `_plugins/*/.venv/`, `__pycache__/`, `node_modules/` — **nikdy** neanalyzuj.
+- Kód v `.venv/`, `__pycache__/` a `node_modules/` kteréhokoli projektu — **nikdy** neanalyzuj.

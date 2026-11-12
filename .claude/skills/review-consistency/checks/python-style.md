@@ -6,6 +6,8 @@ Cíl: kód napříč všemi pluginy + core vypadá, jako by ho psal jeden člov�
 
 Používá se Python ≥3.12, balíčkování přes uv, `pyproject.toml` s hatchling. Plugin entry point je typicky `plugin.py` s třídou `<Name>Plugin` a instancí `plugin`.
 
+Pravidla jsou v `docs/guidelines/python.md`. Ruff se stejnou konfigurací ve všech repech hlídá přes `scripts/verify` formátování, pořadí importů, zákaz `from __future__ import annotations` (TID251), `X | None` místo `Optional[X]` a další. To nehlas, jen rozdíl v `[tool.ruff*]` mezi repy.
+
 ## Postup
 
 1. Přečti core (`krizky/*.py`) — to je precedent.
@@ -21,15 +23,12 @@ Používá se Python ≥3.12, balíčkování přes uv, `pyproject.toml` s hatch
 - [ ] `__init__.py` obsah — prázdný, re-exporty, nebo verze?
 
 ### Imports
-- [ ] `from __future__ import annotations` — všude, nikde, mix?
 - [ ] Absolute vs relative imports — jednotný styl?
-- [ ] Pořadí: stdlib, 3rd party, local — dodržené?
 - [ ] Import `hookimpl` — vždy `from krizky.hooks import hookimpl`, nebo někdo import přes `pluggy` přímo?
 - [ ] Lazy imports uvnitř metod (viz `PhotosPlugin.prepare_jinja2_environment` importuje `PhotoContext` uvnitř) — kdy ano, kdy ne? Konzistentní kritérium?
 
 ### Typing
 - [ ] Používají všechny moduly type hints na veřejném API?
-- [ ] `Path | None` vs `Optional[Path]` — jednotné?
 - [ ] Return type `-> None` na `void` funkcích — konzistentně vyžadován?
 - [ ] `TYPE_CHECKING` použití — kdo, proč?
 
@@ -56,15 +55,14 @@ Používá se Python ≥3.12, balíčkování přes uv, `pyproject.toml` s hatch
 - [ ] Kdy se používá `@dataclass`, kdy plain class, kdy prostě dict pro strukturovaná data? Konzistentní kritérium?
 - [ ] Photo dict, config dict — je někde formalizovaný (dataclass/TypedDict), nebo všude jen `dict`?
 
-### `from __future__ import annotations` + jiné boilerplate
-- [ ] Header každého modulu (docstring, `from __future__`, imports) — konzistentní pořadí?
+### Hlavička modulu
+- [ ] Header každého modulu (docstring, imports, `_log`) — konzistentní pořadí?
 - [ ] Šebang, encoding pragma — nemá tu nikdo být (Python 3), pokud ano → nice-to-have.
 
 ### Chybějící / zapomenuté konvence
 - [ ] `assert` v produkčním kódu (má být jen v testech nebo za `if __debug__`) — někdo?
 - [ ] `print()` místo loggeru — někdo?
-- [ ] Trailing whitespace, mixed tabs/spaces — když ano, může to znamenat, že projekt neběží přes formatter.
-- [ ] Formatter (ruff / black) — je nakonfigurovaný v pyproject a stejně napříč projekty?
+- [ ] Má každé repo `scripts/verify` a stejné sekce `[tool.ruff*]` v `pyproject.toml`?
 
 ## Reporting
 
