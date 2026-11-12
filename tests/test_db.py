@@ -4,21 +4,18 @@ import json
 import sqlite3
 from pathlib import Path
 
-import pytest
-
 from krizky.db import (
     fetch_by_category,
     fetch_by_tag,
     fetch_distinct_categories,
     fetch_distinct_tags,
     fetch_records,
-    parse_row,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _conn(tmp_path: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(str(tmp_path / "test.db"))
@@ -40,34 +37,44 @@ def _make_table(conn: sqlite3.Connection, rows: list[dict], table: str = "data")
 # fetch_distinct_categories
 # ---------------------------------------------------------------------------
 
+
 def test_fetch_distinct_categories_basic(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {"typ": "kriz", "typ_slug": "kriz"},
-        {"typ": "kriz", "typ_slug": "kriz"},
-        {"typ": "socha", "typ_slug": "socha"},
-    ])
+    _make_table(
+        conn,
+        [
+            {"typ": "kriz", "typ_slug": "kriz"},
+            {"typ": "kriz", "typ_slug": "kriz"},
+            {"typ": "socha", "typ_slug": "socha"},
+        ],
+    )
     result = fetch_distinct_categories(conn, "data", "typ", "typ_slug")
     assert set(result) == {("kriz", "kriz"), ("socha", "socha")}
 
 
 def test_fetch_distinct_categories_skips_null_and_empty(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {"typ": "kriz", "typ_slug": "kriz"},
-        {"typ": None, "typ_slug": None},
-        {"typ": "", "typ_slug": ""},
-    ])
+    _make_table(
+        conn,
+        [
+            {"typ": "kriz", "typ_slug": "kriz"},
+            {"typ": None, "typ_slug": None},
+            {"typ": "", "typ_slug": ""},
+        ],
+    )
     result = fetch_distinct_categories(conn, "data", "typ", "typ_slug")
     assert result == [("kriz", "kriz")]
 
 
 def test_fetch_distinct_categories_with_condition(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {"typ": "kriz", "typ_slug": "kriz", "stav": "ok"},
-        {"typ": "socha", "typ_slug": "socha", "stav": "hidden"},
-    ])
+    _make_table(
+        conn,
+        [
+            {"typ": "kriz", "typ_slug": "kriz", "stav": "ok"},
+            {"typ": "socha", "typ_slug": "socha", "stav": "hidden"},
+        ],
+    )
     result = fetch_distinct_categories(conn, "data", "typ", "typ_slug", condition="stav = 'ok'")
     assert result == [("kriz", "kriz")]
 
@@ -76,36 +83,43 @@ def test_fetch_distinct_categories_with_condition(tmp_path: Path) -> None:
 # fetch_distinct_tags
 # ---------------------------------------------------------------------------
 
+
 def test_fetch_distinct_tags_basic(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {
-            "stitky": json.dumps(["priroda", "kamen"]),
-            "stitky_slug": json.dumps({"priroda": "priroda", "kamen": "kamen"}),
-        },
-        {
-            "stitky": json.dumps(["priroda"]),
-            "stitky_slug": json.dumps({"priroda": "priroda"}),
-        },
-    ])
+    _make_table(
+        conn,
+        [
+            {
+                "stitky": json.dumps(["priroda", "kamen"]),
+                "stitky_slug": json.dumps({"priroda": "priroda", "kamen": "kamen"}),
+            },
+            {
+                "stitky": json.dumps(["priroda"]),
+                "stitky_slug": json.dumps({"priroda": "priroda"}),
+            },
+        ],
+    )
     result = fetch_distinct_tags(conn, "data", "stitky", "stitky_slug")
     assert set(result) == {("priroda", "priroda"), ("kamen", "kamen")}
 
 
 def test_fetch_distinct_tags_with_condition(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {
-            "stitky": json.dumps(["priroda"]),
-            "stitky_slug": json.dumps({"priroda": "priroda"}),
-            "stav": "ok",
-        },
-        {
-            "stitky": json.dumps(["kamen"]),
-            "stitky_slug": json.dumps({"kamen": "kamen"}),
-            "stav": "hidden",
-        },
-    ])
+    _make_table(
+        conn,
+        [
+            {
+                "stitky": json.dumps(["priroda"]),
+                "stitky_slug": json.dumps({"priroda": "priroda"}),
+                "stav": "ok",
+            },
+            {
+                "stitky": json.dumps(["kamen"]),
+                "stitky_slug": json.dumps({"kamen": "kamen"}),
+                "stav": "hidden",
+            },
+        ],
+    )
     result = fetch_distinct_tags(conn, "data", "stitky", "stitky_slug", condition="stav = 'ok'")
     assert result == [("priroda", "priroda")]
 
@@ -114,23 +128,30 @@ def test_fetch_distinct_tags_with_condition(tmp_path: Path) -> None:
 # fetch_by_category
 # ---------------------------------------------------------------------------
 
+
 def test_fetch_by_category_basic(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {"slug": "a", "typ": "kriz"},
-        {"slug": "b", "typ": "socha"},
-        {"slug": "c", "typ": "kriz"},
-    ])
+    _make_table(
+        conn,
+        [
+            {"slug": "a", "typ": "kriz"},
+            {"slug": "b", "typ": "socha"},
+            {"slug": "c", "typ": "kriz"},
+        ],
+    )
     result = fetch_by_category(conn, "data", "rowid", "asc", "typ", "kriz")
     assert [r["slug"] for r in result] == ["a", "c"]
 
 
 def test_fetch_by_category_with_condition(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {"slug": "a", "typ": "kriz", "stav": "ok"},
-        {"slug": "b", "typ": "kriz", "stav": "hidden"},
-    ])
+    _make_table(
+        conn,
+        [
+            {"slug": "a", "typ": "kriz", "stav": "ok"},
+            {"slug": "b", "typ": "kriz", "stav": "hidden"},
+        ],
+    )
     result = fetch_by_category(conn, "data", "rowid", "asc", "typ", "kriz", condition="stav = 'ok'")
     assert [r["slug"] for r in result] == ["a"]
 
@@ -139,24 +160,33 @@ def test_fetch_by_category_with_condition(tmp_path: Path) -> None:
 # fetch_by_tag
 # ---------------------------------------------------------------------------
 
+
 def test_fetch_by_tag_basic(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {"slug": "a", "stitky": json.dumps(["priroda", "kamen"])},
-        {"slug": "b", "stitky": json.dumps(["priroda"])},
-        {"slug": "c", "stitky": json.dumps(["kamen"])},
-    ])
+    _make_table(
+        conn,
+        [
+            {"slug": "a", "stitky": json.dumps(["priroda", "kamen"])},
+            {"slug": "b", "stitky": json.dumps(["priroda"])},
+            {"slug": "c", "stitky": json.dumps(["kamen"])},
+        ],
+    )
     result = fetch_by_tag(conn, "data", "rowid", "asc", "stitky", "priroda")
     assert [r["slug"] for r in result] == ["a", "b"]
 
 
 def test_fetch_by_tag_with_condition(tmp_path: Path) -> None:
     conn = _conn(tmp_path)
-    _make_table(conn, [
-        {"slug": "a", "stitky": json.dumps(["priroda"]), "stav": "ok"},
-        {"slug": "b", "stitky": json.dumps(["priroda"]), "stav": "hidden"},
-    ])
-    result = fetch_by_tag(conn, "data", "rowid", "asc", "stitky", "priroda", condition="stav = 'ok'")
+    _make_table(
+        conn,
+        [
+            {"slug": "a", "stitky": json.dumps(["priroda"]), "stav": "ok"},
+            {"slug": "b", "stitky": json.dumps(["priroda"]), "stav": "hidden"},
+        ],
+    )
+    result = fetch_by_tag(
+        conn, "data", "rowid", "asc", "stitky", "priroda", condition="stav = 'ok'"
+    )
     assert [r["slug"] for r in result] == ["a"]
 
 

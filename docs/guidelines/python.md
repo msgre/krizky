@@ -118,8 +118,10 @@ Konvence:
 class PhotosError(Exception):
     """Base class for krizky-photos errors."""
 
+
 class FocalPointsError(PhotosError):
     """Focal points file is malformed or missing."""
+
 
 class PhotoFetchError(PhotosError):
     """Failed to fetch photo metadata from Google Drive."""
@@ -144,6 +146,7 @@ path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 # SQLite s kontext managerem
 import sqlite3
+
 with sqlite3.connect(str(db_path)) as conn:
     cur = conn.execute("SELECT ...", (param,))
     rows = cur.fetchall()

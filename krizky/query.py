@@ -34,7 +34,7 @@ class _SqlProxy:
     not from external data.
     """
 
-    __slots__ = ("_value", "_collector")
+    __slots__ = ("_collector", "_value")
 
     def __init__(self, value: object, collector: _SqlCollector) -> None:
         self._value = value

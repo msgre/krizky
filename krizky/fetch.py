@@ -1,6 +1,5 @@
 """Fetching Google Sheets, Google Docs, and Google Drive photo metadata for krizky."""
 
-import json
 import subprocess
 import sys
 import urllib.error
@@ -71,9 +70,7 @@ def fetch_doc(id: str, output_path: Path) -> None:
             f"HTTP error {exc.code} while fetching doc id={id!r}: {exc.reason}"
         ) from exc
     except urllib.error.URLError as exc:
-        raise FetchError(
-            f"URL error while fetching doc id={id!r}: {exc.reason}"
-        ) from exc
+        raise FetchError(f"URL error while fetching doc id={id!r}: {exc.reason}") from exc
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(raw_bytes)
@@ -114,10 +111,7 @@ def run_transform(
         stderr=sys.stderr,
     )
     if result.returncode != 0:
-        raise TransformError(
-            f"Transform script '{script}' exited with code {result.returncode}"
-        )
-
+        raise TransformError(f"Transform script '{script}' exited with code {result.returncode}")
 
 
 def fetch_sources(config: dict, config_dir: Path, transform: bool = False, pm=None) -> None:

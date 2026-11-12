@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import textwrap
 from pathlib import Path
 
@@ -10,10 +9,10 @@ import pytest
 
 from krizky.config import ConfigError, load_config, validate_config
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def write_yaml(tmp_path: Path, content: str, filename: str = "config.yaml") -> Path:
     """Write *content* to a YAML file inside *tmp_path* and return its path."""
@@ -50,6 +49,7 @@ def minimal_valid_config(script_path: Path) -> dict:
 # test_load_config_basic
 # ---------------------------------------------------------------------------
 
+
 def test_load_config_basic(tmp_path: Path) -> None:
     """load_config returns a dict for a valid YAML file."""
     p = write_yaml(
@@ -75,6 +75,7 @@ def test_load_config_basic(tmp_path: Path) -> None:
 # test_env_substitution
 # ---------------------------------------------------------------------------
 
+
 def test_env_substitution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Values starting with '$' are replaced with the env variable value."""
     monkeypatch.setenv("MY_VAR", "hello_world")
@@ -96,6 +97,7 @@ def test_env_substitution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
 # ---------------------------------------------------------------------------
 # test_env_substitution_missing
 # ---------------------------------------------------------------------------
+
 
 def test_env_substitution_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A missing env variable referenced as '$VAR' raises ConfigError."""
@@ -120,6 +122,7 @@ def test_env_substitution_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 # test_validate_main_true_missing
 # ---------------------------------------------------------------------------
 
+
 def test_validate_main_true_missing() -> None:
     """validate_config raises ConfigError when no table has main: true."""
     config = {
@@ -139,6 +142,7 @@ def test_validate_main_true_missing() -> None:
 # test_validate_main_true_duplicate
 # ---------------------------------------------------------------------------
 
+
 def test_validate_main_true_duplicate() -> None:
     """validate_config raises ConfigError when more than one table has main: true."""
     config = {
@@ -157,6 +161,7 @@ def test_validate_main_true_duplicate() -> None:
 # ---------------------------------------------------------------------------
 # test_validate_docs_missing_output
 # ---------------------------------------------------------------------------
+
 
 def test_validate_docs_missing_output(tmp_path: Path) -> None:
     """validate_config raises ConfigError when a docs entry lacks 'output'."""
@@ -183,6 +188,7 @@ def test_validate_docs_missing_output(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Additional edge-case tests
 # ---------------------------------------------------------------------------
+
 
 def test_load_config_file_not_found(tmp_path: Path) -> None:
     """load_config raises ConfigError for a nonexistent file."""

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import textwrap
 from datetime import datetime
 from pathlib import Path
 
@@ -13,10 +12,10 @@ import pytest
 from krizky.render import page_path, render_config_str
 from krizky.site import SiteError, _make_absolute_url, build_site
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_db(db_path: Path, records: list[dict], table: str = "data") -> None:
     """Create a SQLite DB with a single table populated from records."""
@@ -64,7 +63,9 @@ def _base_config(tmp_path: Path, pages: dict, extra_site: dict | None = None) ->
     }
 
 
-def _setup(tmp_path: Path, records: list[dict], pages: dict, extra_site: dict | None = None) -> dict:
+def _setup(
+    tmp_path: Path, records: list[dict], pages: dict, extra_site: dict | None = None
+) -> dict:
     """Create DB + templates directories and return a config."""
     sources_dir = tmp_path / "sources"
     sources_dir.mkdir()
@@ -77,6 +78,7 @@ def _setup(tmp_path: Path, records: list[dict], pages: dict, extra_site: dict | 
 # ---------------------------------------------------------------------------
 # Unit tests for helpers
 # ---------------------------------------------------------------------------
+
 
 def test_page_path_first_page() -> None:
     assert page_path("/mista.html", 1) == "/mista.html"
@@ -91,11 +93,15 @@ def test_page_path_deep_path() -> None:
 
 
 def test_render_config_str_simple() -> None:
-    assert render_config_str("/{{ record.slug }}.html", record={"slug": "my-slug"}) == "/my-slug.html"
+    assert (
+        render_config_str("/{{ record.slug }}.html", record={"slug": "my-slug"}) == "/my-slug.html"
+    )
 
 
 def test_render_config_str_multiple() -> None:
-    result = render_config_str("/{{ record.a }}/{{ record.b }}.html", record={"a": "foo", "b": "bar"})
+    result = render_config_str(
+        "/{{ record.a }}/{{ record.b }}.html", record={"a": "foo", "b": "bar"}
+    )
     assert result == "/foo/bar.html"
 
 
@@ -117,6 +123,7 @@ def test_render_config_str_cross_table() -> None:
 # ---------------------------------------------------------------------------
 # absolute_url helper
 # ---------------------------------------------------------------------------
+
 
 def test_absolute_url_joins_base_and_path() -> None:
     fn = _make_absolute_url("https://example.com")
@@ -160,7 +167,8 @@ def test_absolute_url_and_site_base_url_in_template(tmp_path: Path) -> None:
         extra_site={"base_url": "https://valasskenebe.cz"},
     )
     _make_template(
-        tmp_path, "index.html",
+        tmp_path,
+        "index.html",
         "{{ site.base_url }}|{{ absolute_url('/foo.html') }}",
     )
 
@@ -174,12 +182,17 @@ def test_absolute_url_and_site_base_url_in_template(tmp_path: Path) -> None:
 # test_simple_page
 # ---------------------------------------------------------------------------
 
+
 def test_simple_page(tmp_path: Path) -> None:
     """A simple page renders filtered records into the template."""
     records = [{"slug": "a", "nazev": "First"}, {"slug": "b", "nazev": "Second"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+    )
     _make_template(tmp_path, "all.html", "{% for r in filtered %}{{ r.nazev }},{% endfor %}")
 
     build_site(config, config_dir=tmp_path)
@@ -193,12 +206,17 @@ def test_simple_page(tmp_path: Path) -> None:
 # test_query_limit
 # ---------------------------------------------------------------------------
 
+
 def test_query_limit(tmp_path: Path) -> None:
     """A page with query.limit only includes the first N records."""
     records = [{"slug": str(i), "nazev": f"Item{i}"} for i in range(5)]
-    config = _setup(tmp_path, records, {
-        "homepage": {"path": "/index.html", "template": "index.html", "query": {"limit": 2}},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "homepage": {"path": "/index.html", "template": "index.html", "query": {"limit": 2}},
+        },
+    )
     _make_template(tmp_path, "index.html", "{{ filtered|length }}")
 
     build_site(config, config_dir=tmp_path)
@@ -211,6 +229,7 @@ def test_query_limit(tmp_path: Path) -> None:
 # test_query_condition
 # ---------------------------------------------------------------------------
 
+
 def test_query_order_by(tmp_path: Path) -> None:
     """query.order_by a query.ordering přebijí globální nastavení."""
     records = [
@@ -218,10 +237,17 @@ def test_query_order_by(tmp_path: Path) -> None:
         {"slug": "b", "val": "30"},
         {"slug": "c", "val": "20"},
     ]
-    config = _setup(tmp_path, records, {
-        "page": {"path": "/page.html", "template": "page.html",
-                 "query": {"order_by": "val", "ordering": "desc", "limit": 2}},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "page": {
+                "path": "/page.html",
+                "template": "page.html",
+                "query": {"order_by": "val", "ordering": "desc", "limit": 2},
+            },
+        },
+    )
     _make_template(tmp_path, "page.html", "{% for r in filtered %}{{ r.slug }}{% endfor %}")
 
     build_site(config, config_dir=tmp_path)
@@ -233,9 +259,17 @@ def test_query_order_by(tmp_path: Path) -> None:
 def test_query_condition(tmp_path: Path) -> None:
     """A page with query.condition filters to matching records."""
     records = [{"slug": "a", "typ": "kriz"}, {"slug": "b", "typ": "socha"}]
-    config = _setup(tmp_path, records, {
-        "krize": {"path": "/krize.html", "template": "krize.html", "query": {"condition": "typ = 'kriz'"}},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "krize": {
+                "path": "/krize.html",
+                "template": "krize.html",
+                "query": {"condition": "typ = 'kriz'"},
+            },
+        },
+    )
     _make_template(tmp_path, "krize.html", "{% for r in filtered %}{{ r.slug }},{% endfor %}")
 
     build_site(config, config_dir=tmp_path)
@@ -249,12 +283,21 @@ def test_query_condition(tmp_path: Path) -> None:
 # test_detail_page
 # ---------------------------------------------------------------------------
 
+
 def test_detail_page(tmp_path: Path) -> None:
     """detail: true generates one page per record, with {{ record }} in context."""
     records = [{"slug": "prvni", "nazev": "První"}, {"slug": "druhy", "nazev": "Druhý"}]
-    config = _setup(tmp_path, records, {
-        "detail": {"detail": True, "path": "/{{ record.slug }}.html", "template": "detail.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "detail": {
+                "detail": True,
+                "path": "/{{ record.slug }}.html",
+                "template": "detail.html",
+            },
+        },
+    )
     _make_template(tmp_path, "detail.html", "{{ record.nazev }}")
 
     build_site(config, config_dir=tmp_path)
@@ -267,6 +310,7 @@ def test_detail_page(tmp_path: Path) -> None:
 # test_category_page
 # ---------------------------------------------------------------------------
 
+
 def test_category_page(tmp_path: Path) -> None:
     """category: generates one page per unique category value."""
     records = [
@@ -274,10 +318,22 @@ def test_category_page(tmp_path: Path) -> None:
         {"slug": "b", "typ": "kriz", "typ_slug": "kriz"},
         {"slug": "c", "typ": "socha", "typ_slug": "socha"},
     ]
-    config = _setup(tmp_path, records, {
-        "kategorie": {"category": "typ", "path": "/{{ category.slug }}.html", "template": "kat.html"},
-    })
-    _make_template(tmp_path, "kat.html", "{{ category.value }}:{% for r in filtered %}{{ r.slug }},{% endfor %}")
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "kategorie": {
+                "category": "typ",
+                "path": "/{{ category.slug }}.html",
+                "template": "kat.html",
+            },
+        },
+    )
+    _make_template(
+        tmp_path,
+        "kat.html",
+        "{{ category.value }}:{% for r in filtered %}{{ r.slug }},{% endfor %}",
+    )
 
     build_site(config, config_dir=tmp_path)
 
@@ -292,6 +348,7 @@ def test_category_page(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # test_category_page_many
 # ---------------------------------------------------------------------------
+
 
 def test_category_page_many(tmp_path: Path) -> None:
     """many: true handles JSON-list category columns."""
@@ -312,15 +369,23 @@ def test_category_page_many(tmp_path: Path) -> None:
             "stitky_slug": json.dumps({"kamen": "kamen"}),
         },
     ]
-    config = _setup(tmp_path, records, {
-        "stitky": {
-            "category": "stitky",
-            "many": True,
-            "path": "/{{ category.slug }}.html",
-            "template": "stitky.html",
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "stitky": {
+                "category": "stitky",
+                "many": True,
+                "path": "/{{ category.slug }}.html",
+                "template": "stitky.html",
+            },
         },
-    })
-    _make_template(tmp_path, "stitky.html", "{{ category.value }}:{% for r in filtered %}{{ r.slug }},{% endfor %}")
+    )
+    _make_template(
+        tmp_path,
+        "stitky.html",
+        "{{ category.value }}:{% for r in filtered %}{{ r.slug }},{% endfor %}",
+    )
 
     build_site(config, config_dir=tmp_path)
 
@@ -336,13 +401,23 @@ def test_category_page_many(tmp_path: Path) -> None:
 # test_pagination
 # ---------------------------------------------------------------------------
 
+
 def test_pagination(tmp_path: Path) -> None:
     """paginate_by splits records across multiple numbered pages."""
     records = [{"slug": str(i), "nazev": f"Item{i}"} for i in range(5)]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    }, extra_site={"paginate_by": 2})
-    _make_template(tmp_path, "all.html", "{{ pagination.page }}/{{ pagination.total_pages }}:{% for r in filtered %}{{ r.slug }},{% endfor %}")
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+        extra_site={"paginate_by": 2},
+    )
+    _make_template(
+        tmp_path,
+        "all.html",
+        "{{ pagination.page }}/{{ pagination.total_pages }}:{% for r in filtered %}{{ r.slug }},{% endfor %}",
+    )
 
     build_site(config, config_dir=tmp_path)
 
@@ -357,10 +432,17 @@ def test_pagination(tmp_path: Path) -> None:
 def test_pagination_nav_urls(tmp_path: Path) -> None:
     """Paginated pages expose correct pagination.prev_url/next_url context variables."""
     records = [{"slug": str(i)} for i in range(4)]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    }, extra_site={"paginate_by": 2})
-    _make_template(tmp_path, "all.html", "prev={{ pagination.prev_url }},next={{ pagination.next_url }}")
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+        extra_site={"paginate_by": 2},
+    )
+    _make_template(
+        tmp_path, "all.html", "prev={{ pagination.prev_url }},next={{ pagination.next_url }}"
+    )
 
     build_site(config, config_dir=tmp_path)
 
@@ -373,9 +455,14 @@ def test_pagination_nav_urls(tmp_path: Path) -> None:
 def test_pagination_disabled_per_page(tmp_path: Path) -> None:
     """paginate: false on a page disables global pagination for that page."""
     records = [{"slug": str(i)} for i in range(4)]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html", "paginate": False},
-    }, extra_site={"paginate_by": 2})
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html", "paginate": False},
+        },
+        extra_site={"paginate_by": 2},
+    )
     _make_template(tmp_path, "all.html", "{{ filtered|length }}")
 
     build_site(config, config_dir=tmp_path)
@@ -388,6 +475,7 @@ def test_pagination_disabled_per_page(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # test_tables_context
 # ---------------------------------------------------------------------------
+
 
 def test_tables_context(tmp_path: Path) -> None:
     """tables.X is available in template context."""
@@ -436,6 +524,7 @@ def test_tables_context(tmp_path: Path) -> None:
 # test_docs_context
 # ---------------------------------------------------------------------------
 
+
 def test_docs_context(tmp_path: Path) -> None:
     """docs.X is available in template context as string content."""
     sources_dir = tmp_path / "sources"
@@ -479,12 +568,18 @@ def test_docs_context(tmp_path: Path) -> None:
 # test_assets_copied
 # ---------------------------------------------------------------------------
 
+
 def test_assets_copied(tmp_path: Path) -> None:
     """Assets directory is copied into the output directory."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    }, extra_site={"assets": str(tmp_path / "assets")})
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+        extra_site={"assets": str(tmp_path / "assets")},
+    )
     _make_template(tmp_path, "all.html", "ok")
 
     assets = tmp_path / "assets"
@@ -500,12 +595,18 @@ def test_assets_copied(tmp_path: Path) -> None:
 # test_build_context
 # ---------------------------------------------------------------------------
 
+
 def test_build_assets_url_in_template(tmp_path: Path) -> None:
     """build.assets_url from site config is available in templates."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    }, extra_site={"assets_url": "/static/assets"})
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+        extra_site={"assets_url": "/static/assets"},
+    )
     _make_template(tmp_path, "all.html", "{{ build.assets_url }}")
 
     build_site(config, config_dir=tmp_path)
@@ -517,9 +618,13 @@ def test_build_assets_url_in_template(tmp_path: Path) -> None:
 def test_build_assets_url_defaults_to_empty(tmp_path: Path) -> None:
     """build.assets_url defaults to empty string when not set in config."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+    )
     _make_template(tmp_path, "all.html", "{{ build.assets_url }}")
 
     build_site(config, config_dir=tmp_path)
@@ -534,9 +639,14 @@ def test_build_inline_css_in_template(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
     (assets / "css").mkdir(parents=True)
     (assets / "css" / "style.css").write_text("body{color:red}", encoding="utf-8")
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    }, extra_site={"assets": str(assets)})
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+        extra_site={"assets": str(assets)},
+    )
     _make_template(tmp_path, "all.html", "{{ build.inline_css }}")
 
     build_site(config, config_dir=tmp_path)
@@ -548,9 +658,13 @@ def test_build_inline_css_in_template(tmp_path: Path) -> None:
 def test_build_inline_css_empty_when_file_missing(tmp_path: Path) -> None:
     """build.inline_css is empty string when assets/css/style.css does not exist."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+    )
     _make_template(tmp_path, "all.html", "{{ build.inline_css }}")
 
     build_site(config, config_dir=tmp_path)
@@ -563,9 +677,13 @@ def test_build_last_update_in_template(tmp_path: Path) -> None:
     """build.last_update is a datetime object representing the build time."""
     before = datetime.now()
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+    )
     _make_template(tmp_path, "all.html", "{{ build.last_update.year }}")
 
     build_site(config, config_dir=tmp_path)
@@ -579,6 +697,7 @@ def test_build_last_update_in_template(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # test_site_context
 # ---------------------------------------------------------------------------
+
 
 def test_site_title_jinja2_from_table(tmp_path: Path) -> None:
     """site.title a site.description mohou být Jinja2 šablony odkazující na tables."""
@@ -613,10 +732,17 @@ def test_site_title_jinja2_from_table(tmp_path: Path) -> None:
 def test_site_object_in_template(tmp_path: Path) -> None:
     """site.title, site.description and site.language are available in templates."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    }, extra_site={"description": "About us", "language": "cs"})
-    _make_template(tmp_path, "all.html", "{{ site.title }}|{{ site.description }}|{{ site.language }}")
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+        extra_site={"description": "About us", "language": "cs"},
+    )
+    _make_template(
+        tmp_path, "all.html", "{{ site.title }}|{{ site.description }}|{{ site.language }}"
+    )
 
     build_site(config, config_dir=tmp_path)
 
@@ -627,9 +753,13 @@ def test_site_object_in_template(tmp_path: Path) -> None:
 def test_page_name_in_context(tmp_path: Path) -> None:
     """page_name obsahuje klíč aktuální stránky z config pages."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "vsechna_mista": {"path": "/mista.html", "template": "page.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "vsechna_mista": {"path": "/mista.html", "template": "page.html"},
+        },
+    )
     _make_template(tmp_path, "page.html", "{{ page_name }}")
 
     build_site(config, config_dir=tmp_path)
@@ -641,10 +771,14 @@ def test_page_name_in_context(tmp_path: Path) -> None:
 def test_pages_context(tmp_path: Path) -> None:
     """pages namespace maps page name to its configured path."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "home":  {"path": "/index.html",        "template": "page.html"},
-        "mista": {"path": "/vsechna-mista.html", "template": "page.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "home": {"path": "/index.html", "template": "page.html"},
+            "mista": {"path": "/vsechna-mista.html", "template": "page.html"},
+        },
+    )
     _make_template(tmp_path, "page.html", "{{ page_urls.home }}|{{ page_urls.mista }}")
 
     build_site(config, config_dir=tmp_path)
@@ -656,9 +790,13 @@ def test_pages_context(tmp_path: Path) -> None:
 def test_site_title_page_override(tmp_path: Path) -> None:
     """Page-level title is available as site.page_title; site.title stays global."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html", "title": "Page Title"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html", "title": "Page Title"},
+        },
+    )
     _make_template(tmp_path, "all.html", "{{ site.page_title }}|{{ site.title }}")
 
     build_site(config, config_dir=tmp_path)
@@ -670,9 +808,13 @@ def test_site_title_page_override(tmp_path: Path) -> None:
 def test_site_page_title_fallback(tmp_path: Path) -> None:
     """site.page_title falls back to site.title when no page-level title is defined."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+    )
     _make_template(tmp_path, "all.html", "{{ site.page_title }}")
 
     build_site(config, config_dir=tmp_path)
@@ -684,23 +826,41 @@ def test_site_page_title_fallback(tmp_path: Path) -> None:
 def test_site_title_detail_substitution(tmp_path: Path) -> None:
     """site.page_title is substituted per record on detail pages; site.title stays global."""
     records = [{"slug": "prvni", "name": "První záznam"}, {"slug": "druhy", "name": "Druhý záznam"}]
-    config = _setup(tmp_path, records, {
-        "detail": {"detail": True, "path": "/{{ record.slug }}.html", "template": "detail.html", "title": "Detail: {{ record.name }}"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "detail": {
+                "detail": True,
+                "path": "/{{ record.slug }}.html",
+                "template": "detail.html",
+                "title": "Detail: {{ record.name }}",
+            },
+        },
+    )
     _make_template(tmp_path, "detail.html", "{{ site.page_title }}|{{ site.title }}")
 
     build_site(config, config_dir=tmp_path)
 
-    assert (tmp_path / "output" / "prvni.html").read_text(encoding="utf-8") == "Detail: První záznam|Test Site"
-    assert (tmp_path / "output" / "druhy.html").read_text(encoding="utf-8") == "Detail: Druhý záznam|Test Site"
+    assert (tmp_path / "output" / "prvni.html").read_text(
+        encoding="utf-8"
+    ) == "Detail: První záznam|Test Site"
+    assert (tmp_path / "output" / "druhy.html").read_text(
+        encoding="utf-8"
+    ) == "Detail: Druhý záznam|Test Site"
 
 
 def test_site_language_page_override(tmp_path: Path) -> None:
     """Page-level language overrides site.language in the template context."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html", "language": "en"},
-    }, extra_site={"language": "cs"})
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html", "language": "en"},
+        },
+        extra_site={"language": "cs"},
+    )
     _make_template(tmp_path, "all.html", "{{ site.language }}")
 
     build_site(config, config_dir=tmp_path)
@@ -713,25 +873,43 @@ def test_site_description_page_override(tmp_path: Path) -> None:
     """Page-level description is in site.page_description; empty value falls back to site.description."""
     records = [
         {"slug": "a", "popis": "Popis záznamu"},
-        {"slug": "b", "popis": ""},   # prázdný → fallback na site
+        {"slug": "b", "popis": ""},  # prázdný → fallback na site
     ]
-    config = _setup(tmp_path, records, {
-        "detail": {"detail": True, "path": "/{{ record.slug }}.html", "template": "detail.html", "description": "{{ record.popis }}"},
-    }, extra_site={"description": "Výchozí popis"})
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "detail": {
+                "detail": True,
+                "path": "/{{ record.slug }}.html",
+                "template": "detail.html",
+                "description": "{{ record.popis }}",
+            },
+        },
+        extra_site={"description": "Výchozí popis"},
+    )
     _make_template(tmp_path, "detail.html", "{{ site.page_description }}|{{ site.description }}")
 
     build_site(config, config_dir=tmp_path)
 
-    assert (tmp_path / "output" / "a.html").read_text(encoding="utf-8") == "Popis záznamu|Výchozí popis"
-    assert (tmp_path / "output" / "b.html").read_text(encoding="utf-8") == "Výchozí popis|Výchozí popis"
+    assert (tmp_path / "output" / "a.html").read_text(
+        encoding="utf-8"
+    ) == "Popis záznamu|Výchozí popis"
+    assert (tmp_path / "output" / "b.html").read_text(
+        encoding="utf-8"
+    ) == "Výchozí popis|Výchozí popis"
 
 
 def test_site_description_optional(tmp_path: Path) -> None:
     """site.description defaults to empty string when not set."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+    )
     _make_template(tmp_path, "all.html", "{{ site.description }}")
 
     build_site(config, config_dir=tmp_path)
@@ -743,6 +921,7 @@ def test_site_description_optional(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # test_missing_database_raises
 # ---------------------------------------------------------------------------
+
 
 def test_missing_database_raises(tmp_path: Path) -> None:
     """build_site raises SiteError when the database file does not exist."""
@@ -759,12 +938,17 @@ def test_missing_database_raises(tmp_path: Path) -> None:
 # test_missing_template_raises
 # ---------------------------------------------------------------------------
 
+
 def test_missing_template_raises(tmp_path: Path) -> None:
     """build_site raises SiteError when a required template does not exist."""
     records = [{"slug": "a"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "nonexistent.html"},
-    })
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "nonexistent.html"},
+        },
+    )
 
     with pytest.raises(SiteError, match="Template not found"):
         build_site(config, config_dir=tmp_path)
@@ -774,13 +958,20 @@ def test_missing_template_raises(tmp_path: Path) -> None:
 # test_json_column_parsed
 # ---------------------------------------------------------------------------
 
+
 def test_json_column_parsed(tmp_path: Path) -> None:
     """JSON string columns are automatically parsed to Python objects in context."""
     records = [{"slug": "a", "tags": json.dumps(["x", "y"])}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    })
-    _make_template(tmp_path, "all.html", "{% for r in filtered %}{{ r.tags|join(',') }}{% endfor %}")
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+    )
+    _make_template(
+        tmp_path, "all.html", "{% for r in filtered %}{{ r.tags|join(',') }}{% endfor %}"
+    )
 
     build_site(config, config_dir=tmp_path)
 
@@ -792,12 +983,18 @@ def test_json_column_parsed(tmp_path: Path) -> None:
 # test_ordering
 # ---------------------------------------------------------------------------
 
+
 def test_ordering_desc(tmp_path: Path) -> None:
     """ordering: desc returns records in reverse rowid order."""
     records = [{"slug": "a"}, {"slug": "b"}, {"slug": "c"}]
-    config = _setup(tmp_path, records, {
-        "all": {"path": "/all.html", "template": "all.html"},
-    }, extra_site={"order_by": "rowid", "ordering": "desc"})
+    config = _setup(
+        tmp_path,
+        records,
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+        },
+        extra_site={"order_by": "rowid", "ordering": "desc"},
+    )
     _make_template(tmp_path, "all.html", "{% for r in filtered %}{{ r.slug }}{% endfor %}")
 
     build_site(config, config_dir=tmp_path)

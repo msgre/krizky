@@ -83,7 +83,9 @@ def render_paginated(
         out = output_dir / base_path.lstrip("/")
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(
-            template.render(**extra_ctx, filtered=records, pagination={"paginated": False, "pages": []}),
+            template.render(
+                **extra_ctx, filtered=records, pagination={"paginated": False, "pages": []}
+            ),
             encoding="utf-8",
         )
         return

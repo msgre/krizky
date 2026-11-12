@@ -24,6 +24,7 @@ Doporučené umístění v core: nový modul `krizky/plugin_helpers.py` pro věc
 # krizky/plugin_helpers.py
 class AssetCopier:
     """Copy plugin assets into output/<plugin_slug>/ once per build."""
+
     def __init__(self, plugin_slug: str, source_dir: Path) -> None:
         self._slug = plugin_slug
         self._source = source_dir  # <plugin>/assets/<plugin-slug>
@@ -148,6 +149,7 @@ mask_polygon = resolve_path(mask.get("polygon"), self._config_dir)
 import sqlite3
 from pathlib import Path
 
+
 def make_db(db_path: Path, records: list[dict], table: str = "data") -> None:
     """Create a SQLite database with the given records for tests."""
     cols = list(records[0].keys())
@@ -156,11 +158,12 @@ def make_db(db_path: Path, records: list[dict], table: str = "data") -> None:
     conn.execute(f'CREATE TABLE IF NOT EXISTS "{table}" ({col_defs})')
     conn.executemany(
         f'INSERT INTO "{table}" ({", ".join(f"""\"{c}\"""" for c in cols)}) '
-        f'VALUES ({", ".join("?" for _ in cols)})',
-        [tuple(r[c] for c in cols) for r in records]
+        f"VALUES ({', '.join('?' for _ in cols)})",
+        [tuple(r[c] for c in cols) for r in records],
     )
     conn.commit()
     conn.close()
+
 
 def minimal_config(**overrides) -> dict:
     """Return a minimal valid krizky config dict for tests."""
@@ -175,6 +178,7 @@ def minimal_config(**overrides) -> dict:
 Použití v plugin testu:
 ```python
 from krizky.testing import make_db, minimal_config
+
 
 def test_something(tmp_path):
     db = tmp_path / "data.db"
@@ -204,6 +208,7 @@ def plugin_stylesheet(plugin_slug: str, filename: str = None) -> str:
     """Return <link> tag for /<plugin_slug>/<filename>. Default filename = <plugin_slug>.css."""
     fname = filename or f"{plugin_slug}.css"
     return f'<link rel="stylesheet" href="/{plugin_slug}/{fname}">'
+
 
 def plugin_script(plugin_slug: str, filename: str = None) -> str:
     """Return <script src=... defer> tag for /<plugin_slug>/<filename>. Default: <plugin_slug>.js."""
