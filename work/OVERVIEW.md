@@ -43,6 +43,7 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
   - `<NN>` začíná `01` každý den, zvyšuje se o 1 s každou realizací
   - `<HESLO>` je stručné anglické shrnutí (kebab-case), např. `project-setup`, `config-loading`
 - Zároveň zaktualizuj řádek v tabulce "Stav fází" výše (změň TODO → IN PROGRESS / DONE + doplň odkaz na log)
+- Při běhu swarmu píše log a řádek jen závěrečný agent, jeden za celý běh. Agenti tiketů ne (viz `CLAUDE.md`, sekce Swarm).
 
 ---
 

@@ -7,3 +7,6 @@ __pycache__/
 temp/
 TODO.md
 tmp/
+.verify-logs/
+.claude/worktrees/
+.claude/settings.local.json
