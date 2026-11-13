@@ -1,7 +1,10 @@
 """Click CLI entry point for krizky."""
 
+import importlib.metadata
 import logging
+import traceback
 from pathlib import Path
+from types import TracebackType
 
 import click
 
@@ -152,6 +155,37 @@ CF_SECRET_ACCESS_KEY=
 # ---------------------------------------------------------------------------
 # CLI definition
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Error reporting for `krizky build site`
+# ---------------------------------------------------------------------------
+
+
+def _plugin_module_names(config_dir: Path) -> set[str]:
+    """Return top-level module names of registered plugins (without loading them)."""
+    names = {p.stem for p in (config_dir / "plugins").glob("*.py")}
+    for ep in importlib.metadata.entry_points(group="krizky"):
+        names.add(ep.module.split(".")[0])
+    return names
+
+
+def _find_plugin_in_traceback(tb: TracebackType | None, plugin_modules: set[str]) -> str | None:
+    """Return the plugin of the innermost traceback frame, or None if there is none."""
+    found = None
+    while tb is not None:
+        module = str(tb.tb_frame.f_globals.get("__name__", ""))
+        top = module.split(".")[0]
+        if top in plugin_modules:
+            found = top
+        tb = tb.tb_next
+    return found
+
+
+def _format_error_line(exc: BaseException, plugin: str | None) -> str:
+    """Format a one-line error message, prefixed by the plugin name if known."""
+    prefix = f"{plugin}: " if plugin else ""
+    return f"ERROR: {prefix}{type(exc).__name__}: {exc}"
 
 
 @click.group()
@@ -305,7 +339,7 @@ def build(ctx: click.Context, force: bool, dry_run: bool) -> None:
     "-v",
     is_flag=True,
     default=False,
-    help="Show debug info (resolved paths, loaded files, …).",
+    help="Show debug info (resolved paths, loaded files, …) and full traceback on errors.",
 )
 @click.pass_context
 def build_site(ctx: click.Context, force: bool, dry_run: bool, verbose: bool) -> None:
@@ -344,6 +378,19 @@ def build_site(ctx: click.Context, force: bool, dry_run: bool, verbose: bool) ->
         click.echo(click.style("OK: Site built successfully.", fg="green"))
     except SiteError as exc:
         click.echo(click.style(f"ERROR: {exc}", fg="red"))
+        raise SystemExit(1) from None
+    except Exception as exc:
+        try:
+            plugin = _find_plugin_in_traceback(
+                exc.__traceback__, _plugin_module_names(Path(config_path).parent)
+            )
+        except Exception:
+            plugin = None
+        click.echo(click.style(_format_error_line(exc, plugin), fg="red"))
+        if verbose:
+            click.echo("".join(traceback.format_exception(exc)))
+        else:
+            click.echo("Run with -v / --verbose to see the full traceback.")
         raise SystemExit(1) from None
 
 
