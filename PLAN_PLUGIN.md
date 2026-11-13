@@ -14,13 +14,14 @@ krizky/
 └── ...
 ```
 
-### Šest hooků
+### Sedm hooků
 
 | Hook | Soubor | Sémantika |
 |---|---|---|
 | `prepare_jinja2_environment(env, config)` | `site.py` | all; přidat filtry/globály do Jinja2 env |
 | `extra_template_vars(config, config_dir, conn)` | `site.py` | all; vrátí dict pro merge do base_ctx |
 | `register_commands(cli)` | `cli.py` | all; přidat Click příkazy (jen entry-point pluginy) |
+| `copy_plugin_assets(output_dir, config, config_dir)` | `site.py` | all; jednou za build, kopírování assetů pluginu |
 | `after_page_written(page_cfg, html_path, output_dir, records, config)` | page procesory | all; post-write akce (JSON, search index…) |
 
 ### Plugin discovery (pořadí priority)

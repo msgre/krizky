@@ -48,6 +48,24 @@ class KrizkySpec:
         """
 
     @hookspec
+    def copy_plugin_assets(self, output_dir, config, config_dir):
+        """Copy the plugin's static assets (CSS, JS, images) into the output.
+
+        Called exactly once per build, after the project's ``site.assets`` are
+        copied to the output and before the first page is rendered (so before
+        the first ``after_page_written``). The plugin therefore does not need to
+        guard against repeated copying. All implementations are called; the
+        return value is ignored.
+
+        Plugin assets belong in ``output_dir/<plugin-name>/``.
+
+        Args:
+            output_dir: Absolute path to the site output directory.
+            config: Full krizky config dict.
+            config_dir: Path to the directory containing config.yaml.
+        """
+
+    @hookspec
     def after_page_written(self, page_cfg, html_path, output_dir, records, config):
         """Called after each logical page (or per-record file) is written.
 
