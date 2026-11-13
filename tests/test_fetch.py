@@ -1,5 +1,6 @@
 """Tests for krizky.fetch module."""
 
+import inspect
 import stat
 import textwrap
 from pathlib import Path
@@ -7,7 +8,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from krizky.fetch import FetchError, TransformError, fetch_doc, fetch_sheet, run_transform
+from krizky.fetch import (
+    FetchError,
+    TransformError,
+    fetch_doc,
+    fetch_sheet,
+    fetch_sources,
+    run_transform,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -178,3 +186,7 @@ def test_fetch_doc_http_error(tmp_path: Path) -> None:
         pytest.raises(FetchError, match="404"),
     ):
         fetch_doc("DOC_ID", output_path)
+
+
+def test_fetch_sources_has_no_pm_parameter() -> None:
+    assert "pm" not in inspect.signature(fetch_sources).parameters
