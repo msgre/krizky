@@ -10,6 +10,7 @@ EXPECTED_HOOKS = {
     "after_page_written",
     "inject_head",
     "inject_body_end",
+    "copy_plugin_assets",
 }
 
 
