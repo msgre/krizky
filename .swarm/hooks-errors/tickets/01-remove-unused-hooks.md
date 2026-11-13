@@ -2,7 +2,7 @@
 id: "01"
 slug: remove-unused-hooks
 title: Odstranit hooky register_page_processor a after_sources_fetched
-status: pending
+status: done
 depends_on: []
 files:
   - krizky/hooks.py
@@ -13,8 +13,8 @@ files:
   - tests/test_fetch.py
   - docs/plugins.md
   - PLAN_PLUGIN.md
-attempts: 0
-pr: ""
+attempts: 1
+pr: "3"
 ---
 
 ## Cíl
