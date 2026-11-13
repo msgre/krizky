@@ -2,15 +2,15 @@
 id: "02"
 slug: build-plugin-errors
 title: Jednořádkový výpis chyb z pluginů v krizky build site
-status: pending
+status: done
 depends_on: []
 files:
   - krizky/cli.py
   - tests/test_cli.py
   - docs/plugins.md
   - README.md
-attempts: 0
-pr: ""
+attempts: 1
+pr: "4"
 ---
 
 ## Cíl
