@@ -21,9 +21,7 @@ krizky/
 | `prepare_jinja2_environment(env, config)` | `site.py` | all; přidat filtry/globály do Jinja2 env |
 | `extra_template_vars(config, config_dir, conn)` | `site.py` | all; vrátí dict pro merge do base_ctx |
 | `register_commands(cli)` | `cli.py` | all; přidat Click příkazy (jen entry-point pluginy) |
-| `register_page_processor(page_cfg)` | `pages/__init__.py` | firstresult; nový typ stránky |
 | `after_page_written(page_cfg, html_path, output_dir, records, config)` | page procesory | all; post-write akce (JSON, search index…) |
-| `after_sources_fetched(config, config_dir, sources_output)` | `fetch.py` | all; post-fetch akce |
 
 ### Plugin discovery (pořadí priority)
 
@@ -67,11 +65,11 @@ krizky/
 ### Krok 1.3 — Thread pm + wire hook calls
 
 - [ ] `krizky/site.py`: `build_site(config, config_dir, pm=None)` — vytvoří pm pokud None; wire `prepare_jinja2_environment` + `extra_template_vars`; předá `pm` a `config` do `RenderContext`
-- [ ] `krizky/pages/__init__.py`: wire `register_page_processor` (plugins first, pak core fallback)
+- ~~`krizky/pages/__init__.py`: wire `register_page_processor`~~ (zrušeno, hook odstraněn 2026-11)
 - [ ] `krizky/pages/simple.py`: wire `after_page_written`, odstranit `json_cfg` blok
 - [ ] `krizky/pages/detail.py`: wire `after_page_written`, odstranit `json_cfg` blok
 - [ ] `krizky/pages/category.py`: wire `after_page_written`, odstranit `json_cfg` blok
-- [ ] `krizky/fetch.py`: `fetch_sources(..., pm=None)` — wire `after_sources_fetched`
+- ~~`krizky/fetch.py`: `fetch_sources(..., pm=None)` — wire `after_sources_fetched`~~ (zrušeno, hook odstraněn 2026-11)
 - [ ] `krizky/cli.py`: create pm s config_dir v subpříkazech; wire `register_commands` na module level
 
 ## Signatura after_page_written

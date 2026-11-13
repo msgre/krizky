@@ -114,7 +114,7 @@ def run_transform(
         raise TransformError(f"Transform script '{script}' exited with code {result.returncode}")
 
 
-def fetch_sources(config: dict, config_dir: Path, transform: bool = False, pm=None) -> None:
+def fetch_sources(config: dict, config_dir: Path, transform: bool = False) -> None:
     """Orchestrate fetching all tables and docs defined in *config*.
 
     Args:
@@ -164,10 +164,3 @@ def fetch_sources(config: dict, config_dir: Path, transform: bool = False, pm=No
                 raise TransformError(
                     f"Transform script for doc '{name}' did not produce expected output: {output_path}"
                 )
-
-    if pm is not None:
-        pm.hook.after_sources_fetched(
-            config=config,
-            config_dir=config_dir,
-            sources_output=sources_output,
-        )
