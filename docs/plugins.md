@@ -1,6 +1,6 @@
 # Plugin systém
 
-krizky podporuje rozšíření přes plugin systém postavený na [pluggy](https://pluggy.readthedocs.io/). Pluginy mohou přidávat nové typy stránek, Jinja2 filtry a globální proměnné, CLI příkazy, post-write akce (např. JSON export, generování search indexu) nebo reagovat na dokončení fetche.
+krizky podporuje rozšíření přes plugin systém postavený na [pluggy](https://pluggy.readthedocs.io/). Pluginy mohou přidávat Jinja2 filtry a globální proměnné, CLI příkazy a post-write akce (např. JSON export, generování search indexu).
 
 ---
 
@@ -96,23 +96,6 @@ def register_commands(self, cli):
         click.echo("Hello from plugin!")
 ```
 
-### `register_page_processor(page_cfg) → PageProcessor | None`
-
-Firstresult hook — první plugin, který vrátí nenulovou hodnotu, vyhraje. Core procesory (detail, category, simple) jsou fallback.
-
-```python
-@hookimpl
-def register_page_processor(self, page_cfg):
-    if page_cfg.get("feed"):
-        return self._render_feed
-    return None
-
-
-def _render_feed(self, page_cfg, template, ctx):
-    # vlastní logika renderování
-    pass
-```
-
 ### `after_page_written(page_cfg, html_path, output_dir, records, config)`
 
 Voláno po zápisu každé logické stránky. Všechny implementace jsou zavolány.
@@ -139,17 +122,6 @@ def after_page_written(self, page_cfg, html_path, output_dir, records, config):
             w = csv.DictWriter(f, fieldnames=records[0].keys())
             w.writeheader()
             w.writerows(records)
-```
-
-### `after_sources_fetched(config, config_dir, sources_output)`
-
-Voláno na konci `krizky fetch sources` po dokončení všech fetchů a transformací. Vhodné pro post-processing dat, validaci nebo warmup cache.
-
-```python
-@hookimpl
-def after_sources_fetched(self, config, config_dir, sources_output):
-    db_path = sources_output / config["sources"]["database"]
-    # např. vybudovat search index z čerstvé DB
 ```
 
 ---
@@ -209,11 +181,6 @@ class SitemapPlugin:
     def after_page_written(self, page_cfg, html_path, output_dir, records, config):
         base_url = config.get("site", {}).get("base_url", "").rstrip("/")
         self._urls.append(f"{base_url}{html_path}")
-
-    @hookimpl
-    def after_sources_fetched(self, config, config_dir, sources_output):
-        # reset při každém novém fetchi
-        self._urls = []
 
 
 plugin = SitemapPlugin()

@@ -16,9 +16,6 @@ class KrizkySpec:
         Called once per build after core filters (md, mdtext, strftime) are
         registered but before any page is rendered. All implementations are called.
 
-        Adding ``config_dir`` is backward-compatible in pluggy: plugins that do
-        not need it simply omit it from their method signature.
-
         Args:
             env: jinja2.Environment instance.
             config: Parsed krizky config dict.
@@ -48,20 +45,6 @@ class KrizkySpec:
 
         Args:
             cli: The root click.Group instance.
-        """
-
-    @hookspec(firstresult=True)
-    def register_page_processor(self, page_cfg):
-        """Return a PageProcessor for *page_cfg*, or None to defer to core.
-
-        The first non-None return value wins. Core processors (detail, category,
-        simple) are tried last, so plugins can override built-in page types.
-
-        Args:
-            page_cfg: Page configuration dict from config.yaml.
-
-        Returns:
-            A PageProcessor callable, or None.
         """
 
     @hookspec
@@ -112,16 +95,4 @@ class KrizkySpec:
         Args:
             page_cfg: Page configuration dict from config.yaml.
             config: Full krizky config dict.
-        """
-
-    @hookspec
-    def after_sources_fetched(self, config, config_dir, sources_output):
-        """Called after all tables and docs are fetched and transformed.
-
-        All implementations are called.
-
-        Args:
-            config: Parsed krizky config dict.
-            config_dir: Path to the directory containing config.yaml.
-            sources_output: Resolved Path to the sources output directory.
         """

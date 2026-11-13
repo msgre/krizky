@@ -261,13 +261,11 @@ def fetch_sources(ctx: click.Context, transform: bool) -> None:
 
     from krizky.fetch import FetchError, TransformError
     from krizky.fetch import fetch_sources as _fetch_sources
-    from krizky.plugin_manager import get_plugin_manager
 
     try:
         click.echo("Fetching sources...")
         config_dir = Path(config_path).parent
-        pm = get_plugin_manager(config_dir)
-        _fetch_sources(config, config_dir=config_dir, transform=transform, pm=pm)
+        _fetch_sources(config, config_dir=config_dir, transform=transform)
         click.echo(click.style("OK: Sources fetched successfully.", fg="green"))
     except (FetchError, TransformError) as exc:
         click.echo(click.style(f"ERROR: {exc}", fg="red"))
