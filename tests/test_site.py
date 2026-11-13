@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from krizky.hooks import hookimpl
+from krizky.plugin_manager import get_plugin_manager
 from krizky.render import page_path, render_config_str
 from krizky.site import SiteError, _make_absolute_url, build_site
 
@@ -1007,3 +1009,84 @@ def test_ordering_desc(tmp_path: Path) -> None:
 
     out = (tmp_path / "output" / "all.html").read_text(encoding="utf-8")
     assert out == "cba"
+
+
+# ---------------------------------------------------------------------------
+# test_copy_plugin_assets_hook
+# ---------------------------------------------------------------------------
+
+
+class _AssetsPlugin:
+    def __init__(self, project_asset: Path | None = None) -> None:
+        self.events: list[str] = []
+        self.calls: list[dict] = []
+        self.asset_seen: bool | None = None
+        self._project_asset = project_asset
+
+    @hookimpl
+    def copy_plugin_assets(self, output_dir, config, config_dir):
+        self.events.append("copy_plugin_assets")
+        self.calls.append({"output_dir": output_dir, "config": config, "config_dir": config_dir})
+        if self._project_asset is not None:
+            self.asset_seen = (output_dir / self._project_asset).is_file()
+
+    @hookimpl
+    def after_page_written(self, page_cfg, html_path, output_dir, records, config):
+        self.events.append("after_page_written")
+
+
+def _multi_page_config(tmp_path: Path, extra_site: dict | None = None) -> dict:
+    config = _setup(
+        tmp_path,
+        [{"slug": "a"}, {"slug": "b"}, {"slug": "c"}],
+        {
+            "all": {"path": "/all.html", "template": "all.html"},
+            "det": {"path": "/{{ record.slug }}.html", "template": "det.html", "type": "detail"},
+        },
+        extra_site=extra_site,
+    )
+    _make_template(tmp_path, "all.html", "x")
+    _make_template(tmp_path, "det.html", "y")
+    return config
+
+
+def test_copy_plugin_assets_called_once_with_args(tmp_path: Path) -> None:
+    config = _multi_page_config(tmp_path)
+    plugin = _AssetsPlugin()
+    pm = get_plugin_manager(tmp_path)
+    pm.register(plugin)
+
+    build_site(config, config_dir=tmp_path, pm=pm)
+
+    assert plugin.events.count("after_page_written") > 1
+    assert len(plugin.calls) == 1
+    call = plugin.calls[0]
+    assert call["output_dir"] == (tmp_path / config["site"]["output"]).resolve()
+    assert call["config"] is config
+    assert call["config_dir"] == tmp_path
+
+
+def test_copy_plugin_assets_runs_before_first_page(tmp_path: Path) -> None:
+    config = _multi_page_config(tmp_path)
+    plugin = _AssetsPlugin()
+    pm = get_plugin_manager(tmp_path)
+    pm.register(plugin)
+
+    build_site(config, config_dir=tmp_path, pm=pm)
+
+    assert plugin.events[0] == "copy_plugin_assets"
+    assert plugin.events.count("copy_plugin_assets") == 1
+
+
+def test_copy_plugin_assets_runs_after_project_assets(tmp_path: Path) -> None:
+    assets = tmp_path / "assets" / "css"
+    assets.mkdir(parents=True)
+    (assets / "style.css").write_text("body{}", encoding="utf-8")
+    config = _multi_page_config(tmp_path, extra_site={"assets": str(tmp_path / "assets")})
+    plugin = _AssetsPlugin(project_asset=Path("assets/css/style.css"))
+    pm = get_plugin_manager(tmp_path)
+    pm.register(plugin)
+
+    build_site(config, config_dir=tmp_path, pm=pm)
+
+    assert plugin.asset_seen is True
