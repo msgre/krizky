@@ -2,7 +2,7 @@
 id: "02"
 slug: copy-plugin-assets-hook
 title: Hook copy_plugin_assets, verze 0.2.0 a dokumentace pro pluginy
-status: pending
+status: done
 depends_on: ["01"]
 files:
   - krizky/hooks.py
@@ -14,8 +14,8 @@ files:
   - docs/plugins.md
   - PLAN_PLUGIN.md
   - README.md
-attempts: 0
-pr: ""
+attempts: 1
+pr: "7"
 ---
 
 ## Cíl
