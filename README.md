@@ -180,7 +180,7 @@ krizky [--config <path>] <příkaz>
 | `krizky fetch sources [--transform]` | Stáhne tabulky a dokumenty; s `--transform` spustí i transform skripty |
 | `krizky fetch photos` | Stáhne metadata fotek z Google Drive a Cloudflare |
 | `krizky build` | Kompletní build (fotky + web) |
-| `krizky build site [--force] [--dry-run]` | Pouze HTML stránky (použije existující DB) |
+| `krizky build site [--force] [--dry-run] [-v]` | Pouze HTML stránky (použije existující DB); `-v` vypíše ladicí informace a u chyby i celý traceback |
 | `krizky build photos [--force] [--dry-run]` | Pouze zpracování a upload fotek |
 
 ## Adresářová struktura projektu

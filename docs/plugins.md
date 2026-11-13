@@ -126,6 +126,20 @@ def after_page_written(self, page_cfg, html_path, output_dir, records, config):
 
 ---
 
+## Chyby v pluginech
+
+Plugin smí v build hoocích vyhazovat vlastní výjimky (ne `click.ClickException`). `krizky build site` je nezobrazí jako syrový traceback, ale jedním červeným řádkem se jménem pluginu (nejvyšší balíček nebo modul, u lokálního pluginu jméno souboru bez `.py`):
+
+```
+Building site...
+ERROR: krizky_photos: FocalPointsError: Neplatný focal point u fotky 007
+Run with -v / --verbose to see the full traceback.
+```
+
+Celý traceback ukáže `krizky build site -v`. Výjimka vzniklá mimo kód pluginu se vypíše bez jména pluginu (`ERROR: RuntimeError: ...`). Příkaz skončí s exit kódem 1.
+
+---
+
 ## Rozšíření config.yaml
 
 Vlastní klíče v `page_cfg` jsou automaticky podporovány — krizky předává celý dict stránky do hooků bez validace neznámých klíčů. Plugin může definovat libovolné klíče:
