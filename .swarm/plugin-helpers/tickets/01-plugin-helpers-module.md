@@ -2,13 +2,13 @@
 id: "01"
 slug: plugin-helpers-module
 title: Modul krizky/plugin_helpers.py s pomocnými funkcemi pro pluginy
-status: pending
+status: done
 depends_on: []
 files:
   - krizky/plugin_helpers.py
   - tests/test_plugin_helpers.py
-attempts: 0
-pr: ""
+attempts: 1
+pr: "6"
 ---
 
 ## Cíl
