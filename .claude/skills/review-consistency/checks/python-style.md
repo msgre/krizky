@@ -1,69 +1,39 @@
-# Check: Python style
+# Kontrola: Python styl
 
-Cíl: kód napříč všemi pluginy + core vypadá, jako by ho psal jeden člověk.
+Cíl: Python core a všech pluginů působí jako od jednoho autora.
 
-## Kontext
-
-Používá se Python ≥3.12, balíčkování přes uv, `pyproject.toml` s hatchling. Plugin entry point je typicky `plugin.py` s třídou `<Name>Plugin` a instancí `plugin`.
-
-Pravidla jsou v `docs/guidelines/python.md`. Ruff se stejnou konfigurací ve všech repech hlídá přes `scripts/verify` formátování, pořadí importů, zákaz `from __future__ import annotations` (TID251), `X | None` místo `Optional[X]` a další. To nehlas, jen rozdíl v `[tool.ruff*]` mezi repy.
+Pravidla jsou v `docs/guidelines/python.md`. Co z nich vynucuje ruff přes `scripts/verify` (formát, pořadí importů, zákaz `from __future__ import annotations`, `X | None` a další pravidla z `[tool.ruff.lint]`), se nehlásí.
 
 ## Postup
 
-1. Přečti core (`krizky/*.py`) — to je precedent.
-2. Pro každý plugin porovnej níže uvedené aspekty s core.
-3. Zaznamenej odchylky.
+1. Porovnej `[tool.ruff*]` v `pyproject.toml` všech repů s core a ověř, že každé repo má `scripts/verify`.
+2. Pro každý plugin projdi strukturu balíčku, `plugin.py` a hlavičky modulů.
+3. Porovnej s core a s `docs/guidelines/python.md` podle pravidel níže.
 
-## Checklist
+## Pravidla
 
-### Package & module layout
-- [ ] Plugin package má jméno `krizky_<x>` (snake_case, ne `krizky-x`). Konzistentní?
-- [ ] Entry point je `krizky_x.plugin:plugin` s modulovým `plugin = <Name>Plugin()`? Nebo někdo exportuje třídu vs instanci?
-- [ ] Rozdělení do modulů: kdy plugin má víc než `plugin.py` (kdy vydělit do `build.py`, `context.py`, atd.)? Konzistentní princip nebo ad-hoc?
-- [ ] `__init__.py` obsah — prázdný, re-exporty, nebo verze?
+### Nástroje
 
-### Imports
-- [ ] Absolute vs relative imports — jednotný styl?
-- [ ] Import `hookimpl` — vždy `from krizky.hooks import hookimpl`, nebo někdo import přes `pluggy` přímo?
-- [ ] Lazy imports uvnitř metod (viz `PhotosPlugin.prepare_jinja2_environment` importuje `PhotoContext` uvnitř) — kdy ano, kdy ne? Konzistentní kritérium?
+- Repo bez `scripts/verify`, nebo s jinou konfigurací ruff než core → **recommended**.
 
-### Typing
-- [ ] Používají všechny moduly type hints na veřejném API?
-- [ ] Return type `-> None` na `void` funkcích — konzistentně vyžadován?
-- [ ] `TYPE_CHECKING` použití — kdo, proč?
+### Struktura balíčku
 
-### Naming
-- [ ] Třídy: `<Feature>Plugin` (např. `PhotosPlugin`, `JsonExportPlugin`)? Konzistentní suffix?
-- [ ] Custom exception třídy: `<Name>Error` (viz `FocalPointsError`)? Všude?
-- [ ] Private funkce/proměnné: `_foo` prefix — konzistentně?
-- [ ] Konstanty: `UPPER_SNAKE_CASE` — dodržené?
-- [ ] Boolean funkce: `is_x`, `has_x`, `can_x` — konzistentní?
+- Balíček `krizky_<x>`, entry point `krizky_<x>.plugin:plugin`, v `plugin.py` třída `<Název>Plugin` a modulová instance `plugin`. Odchylka → **recommended**.
+- Obsah `__init__.py` se mezi pluginy liší (prázdný, re-exporty, verze) → **nice-to-have**.
 
-### Docstrings
-- [ ] Styl: Google-style (`Args:`, `Returns:`, `Raises:` — jako v `krizky/hooks.py`) je precedent. Používají to všechny pluginy?
-- [ ] Modul-level docstring — přítomný, jednotný formát ("krizky-X plugin — <one-liner>")?
-- [ ] Třída/funkce bez docstringu tam, kde je smysl — flag jako recommended.
-- [ ] Docstring v jazyce — český vs anglický, konzistentní?
+### Podle guidelines
 
-### CLI / Click
-- [ ] Které pluginy přidávají Click commands? Přes `register_commands` hook — všechny stejný pattern?
-- [ ] `@click.command`, `@click.group` — struktura konzistentní? (`fetch photos`, `build photos` — používají všichni sub-command style pod globálními groups?)
-- [ ] Help texty: jazyk, formát, přítomnost?
-- [ ] Chybové výstupy: `click.ClickException` vs vlastní exception + traceback?
+Každá odchylka od těchto sekcí `docs/guidelines/python.md` je **recommended**:
 
-### Dataclasses / plain classes / dicts
-- [ ] Kdy se používá `@dataclass`, kdy plain class, kdy prostě dict pro strukturovaná data? Konzistentní kritérium?
-- [ ] Photo dict, config dict — je někde formalizovaný (dataclass/TypedDict), nebo všude jen `dict`?
+- › Docstringy: Google styl v angličtině a modulový docstring na prvním řádku.
+- › Type hints: hinty na veřejných funkcích včetně návratového typu.
+- › Imports: absolutní importy, líný import jen s komentářem proč.
+- › Data types: `dataclass` a `TypedDict` místo `namedtuple`.
+- › Anti-patterns: `assert` v produkčním kódu, `print()`, `except Exception:` mimo top-level CLI handler.
 
-### Hlavička modulu
-- [ ] Header každého modulu (docstring, imports, `_log`) — konzistentní pořadí?
-- [ ] Šebang, encoding pragma — nemá tu nikdo být (Python 3), pokud ano → nice-to-have.
+### Click příkazy
 
-### Chybějící / zapomenuté konvence
-- [ ] `assert` v produkčním kódu (má být jen v testech nebo za `if __debug__`) — někdo?
-- [ ] `print()` místo loggeru — někdo?
-- [ ] Má každé repo `scripts/verify` a stejné sekce `[tool.ruff*]` v `pyproject.toml`?
+- Pluginy registrují příkazy jinak než přes `register_commands`, nebo pod jinou strukturou skupin než core (`krizky fetch <x>`, `krizky build <x>`) → **recommended**.
+- Help texty příkazů jsou v různých jazycích nebo některé chybí → **nice-to-have**.
 
-## Reporting
-
-Většina zjištění bude `recommended`. Označ `blocker` jen když inconsistence blokuje spolehlivé používání API (např. jeden plugin importuje z `krizky.render._internal` — to je API break risk).
+Blocker v této kontrole nevzniká. Problémy s API řeší `api-boundaries.md`.

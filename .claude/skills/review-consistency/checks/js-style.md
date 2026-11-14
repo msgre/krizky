@@ -1,73 +1,39 @@
-# Check: JavaScript style
+# Kontrola: JavaScript
 
-Cíl: JS napříč pluginy vypadá jako od jednoho autora a je konzistentní se svým Python protějškem.
+Cíl: JS všech pluginů působí jako od jednoho autora a sedí na svou Python stranu.
 
-## Kontext
-
-JS je vždy doplněk konkrétního Python pluginu. Neexistuje sdílený JS core. Native JS (žádný build step, žádný framework). Assety jsou typicky pod `<plugin>/assets/<plugin-name>/*.js`.
-
-Pravidla jsou v `docs/guidelines/javascript.md` a `cross-language.md`. Pluginy s JS mají stejný `eslint.config.mjs` a `.prettierrc.json` a obojí hlídá `scripts/verify`. Co vynucuje ESLint (`no-var`, `prefer-const`, `prefer-arrow-callback`, `prefer-template`, `eqeqeq`, `curly`, `no-console`, `no-implicit-globals`) nebo Prettier, nehlas.
-
-**Vazba na Python:** JS často čte konfiguraci vloženou Python stranou (např. `<script type="application/json" id="filter-config">`), reaguje na data-atributy vygenerované šablonami, nebo používá globální objekty vložené `inject_head` hookem (např. `window.krizkyPhotos`). Konzistence názvů mezi Pythonem a JS je zásadní.
+JS je vždy doplněk Python pluginu: nativní JS bez build kroku, typicky v `krizky_<x>/assets/`. Pravidla jsou v `docs/guidelines/javascript.md` a `cross-language.md`. Co vynucuje ESLint nebo Prettier přes `scripts/verify`, se nehlásí.
 
 ## Postup
 
-1. Najdi všechny JS soubory v pluginech (mimo `.venv/` a `node_modules/`):
-   ```bash
-   find ../krizky-* -name "*.js" -not -path "*/.venv/*" -not -path "*/node_modules/*"
-   ```
-2. Přečti hlavičku a top-level strukturu každého (typicky do 100 řádků stačí).
-3. Projdi checklist.
+1. `find ../krizky-* -name "*.js" -not -path "*/node_modules/*" -not -path "*/.venv/*"`
+2. Porovnej `eslint.config.mjs` a `.prettierrc.json` mezi pluginy.
+3. U každého souboru přečti hlavičku, bootstrap a místa, kde čte config a data-atributy.
+4. Ke každému data-atributu a klíči configu najdi protějšek v šablonách a Pythonu pluginu.
 
-## Checklist
+## Pravidla
 
-### Header a wrapping
-- [ ] IIFE `(function () { 'use strict'; ...})();` — používá to každý plugin? Nebo někdo modul-globals? Nebo někdo `if (typeof window !== 'undefined')` guard?
-- [ ] `'use strict'` uvnitř IIFE — všude?
-- [ ] Header komentář: co dělá, jaké data-atributy hostí, jaké elementy hledá. Konzistentní formát?
+### Nástroje
 
-### Language features
-- [ ] `var` / `let` / `const`, arrow callbacks a template literals vynucuje ESLint. Hlas jen to, co lint nepokryje (např. pojmenované funkce vs arrow přiřazené do `const`).
-- [ ] Optional chaining `?.` / nullish coalescing `??` — používá se jednotně?
-- [ ] `for...of` vs `forEach` vs `Array.from(...).map` — konzistentně?
+- Plugin s JS bez ESLint nebo Prettier, nebo s jinou konfigurací než ostatní → **recommended**.
 
-### Naming
-- [ ] Funkce: camelCase (`setupShare`) — všude?
-- [ ] Konstanty: `UPPER_SNAKE` nebo camelCase? (`nativeShare` je camelCase, `paginationWindow` taky.)
-- [ ] Data attributes v HTML: `data-share-copy`, `data-filter-value` — kebab-case, plugin-prefixed. Konzistentní pravidlo?
-- [ ] CSS třídy managed by JS: `is-copied`, `is-active` — konzistentní modifier styl?
-- [ ] Globální objekty: `window.krizky<X>` (např. `window.krizkyPhotos`) — konzistentní namespace prefix?
+### Podle guidelines
 
-### DOM APIs
-- [ ] `querySelector` vs `getElementById` — konzistentní volba?
-- [ ] Event delegace vs per-element listener — kdy?
-- [ ] `addEventListener('click', fn)` vs `element.onclick = fn` — jednotné?
-- [ ] `dataset.foo` vs `getAttribute('data-foo')` — konzistentní?
+Odchylka od těchto sekcí `docs/guidelines/javascript.md` je **recommended**:
 
-### Config injection & bootstrapping
-- [ ] Config je čtený z `<script type="application/json" id="X">` (jako `krizky-filters`) — dělají to všichni podobně?
-- [ ] Nebo z globálního objektu vloženého do `<head>` (jako `window.krizkyPhotos` u photos)? Kdo použije co a proč?
-- [ ] Fail-safe: co dělá plugin, když config chybí? (`filters.js` early-returns tiše — dělají to všichni, nebo někdo hodí chybu do konzole?)
-- [ ] Naming klíčů v injected JSON — camelCase (JS konvence) nebo snake_case (Python konvence)? Konzistentní?
+- › Modul-level struktura: IIFE s `'use strict'` a tichý návrat, když chybí kořenový element.
+- › DOM APIs: `querySelector`, `dataset`, `addEventListener`.
+- › Error handling: `try/catch` kolem `JSON.parse` vložených dat, `console.warn` pro chybný config.
+- › Naming a › Data attributes: prefix `data-<plugin>-*`, `UPPER_SNAKE` pro modulové konstanty.
 
-### Vazba Python ↔ JS (viz `cross-language.md`)
-- [ ] Klíče v injected configu odpovídají Python config klíčům, nebo se transformují? Konzistentní pravidlo?
-- [ ] Data-atributy generuje Jinja šablona — jméno se shoduje s tím, co JS čte? (`data-share-url` v šabloně → `dataset.shareUrl` v JS.)
-- [ ] Prefix atributů (`data-<plugin>-*`) — konzistentně?
+### Vazba Python ↔ JS
 
-### Error handling
-- [ ] `try / catch` kolem `JSON.parse` — všude, kde parsuje uživatelské/injected data?
-- [ ] Silent fail vs `console.warn` — konzistentní volba?
-- [ ] Neexistující DOM elementy — early return vs. skip vs. warn?
+- Klíč configu pro JS není 1:1 `camelCase` podoba Python klíče (zkrácení, přejmenování) → **recommended**. Pokud koliduje s globálem prohlížeče (`window`), **blocker**.
+- Data-atribut, který JS čte, šablona negeneruje, nebo opačně → **blocker**.
+- Dva pluginy používají stejný data-atribut → **blocker** (kolize v HTML webu).
+- Globální objekt na `window` bez předpony `krizky` → **recommended**.
+- Pluginy předávají config do JS různými cestami (`<script type="application/json">` × globál z `inject_head`) bez zjevného důvodu → **nice-to-have**, popiš obě varianty.
 
-### Progressive enhancement
-- [ ] Fallback pro chybějící features (Web Share API, Clipboard API) — všechny pluginy mají fallback path?
-- [ ] Nezávislost na JS (základní funkčnost bez JS) — respektováno konzistentně?
+### Progresivní vylepšení
 
-### Formátování
-- [ ] Odsazení, uvozovky a středníky hlídá Prettier přes `scripts/verify`. Hlas jen plugin s JS bez ESLint a Prettier, nebo rozdíl v jejich konfiguraci mezi pluginy.
-
-## Zvláštní pozornost
-
-- **Sémantický rozjezd napříč pluginy:** dva pluginy používají stejný data-atribut (`data-active`, `data-toggle`) s jinou sémantikou → potenciální kolize v uživatelově webu → blocker.
-- **Globální namespace polluce:** plugin exportuje na `window` něco bez `krizky` prefixu → recommended.
+- Plugin bez fallbacku, když API prohlížeče (Web Share, Clipboard) chybí → **recommended**.

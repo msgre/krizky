@@ -2,51 +2,9 @@
 
 Cílový Python: **3.12+** (dle `requires-python` v pyproject.toml). Balíčkování: **uv**. Formatter/linter: **ruff**. Test framework: **pytest**.
 
-Load this file when a finding touches Python code.
+## Ruff
 
-## Ruff — canonical config
-
-Každý projekt (core + pluginy) má mít v `pyproject.toml`:
-
-```toml
-[tool.ruff]
-target-version = "py312"
-line-length = 100
-extend-exclude = [".venv", "__pycache__", ".pytest_cache", "tests/fixtures"]
-
-[tool.ruff.lint]
-select = [
-    "E",    # pycodestyle errors
-    "F",    # pyflakes
-    "W",    # pycodestyle warnings
-    "I",    # isort
-    "N",    # pep8-naming
-    "UP",   # pyupgrade — modernize idioms for the target version
-    "B",    # bugbear — likely bugs
-    "A",    # builtins — shadowing built-in names
-    "C4",   # comprehensions
-    "SIM",  # simplify
-    "PT",   # pytest style
-    "RUF",  # ruff-specific
-    "FA",   # future-annotations — enforce direction (see below)
-]
-ignore = [
-    "E501",  # line-too-long — line-length above already governs
-]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "auto"
-```
-
-**Skill enforcement:** před každým commitem, kde je změněný `*.py` soubor:
-1. `uv run ruff check --fix <changed_files>` — auto-fix triviality.
-2. Pokud ruff hlásí neopravitelné → skill zastaví, vypíše errors, nemíří dál.
-3. `uv run ruff format <changed_files>` — sjednotit formát.
-4. Znovu ověřit `uv run ruff check <changed_files>` (bez `--fix`) — musí projít clean.
-
-Pokud projekt nemá ruff config v pyproject → skill NEmění config, ale spustí ruff s výše uvedeným ekvivalentem přes CLI (`uv run ruff check --select=... --target-version=py312 ...`). Přidat ruff config je samostatný finding.
+Kanonická konfigurace je `[tool.ruff*]` v `pyproject.toml` core. Pluginy ji mají shodnou a `scripts/verify` ji v každém repu vynucuje (`ruff check`, `ruff format --check`). Rozdíl v konfiguraci mezi repy je chyba, ne lokální výjimka.
 
 ## Python idioms — canonical patterns
 
@@ -59,25 +17,24 @@ Pokud projekt nemá ruff config v pyproject → skill NEmění config, ale spust
 
 ### `from __future__ import annotations`
 
-**NEPOUŽÍVAT** v novém kódu (Python 3.12+ to nepotřebuje; ruff `FA102` bude flagovat). Existující usage v pluginech neodstraňovat proaktivně — smaže se jako side-effect příštího dotyku souboru.
+Zakázaný. Python 3.12+ ho nepotřebuje a ruff ho blokuje pravidlem TID251.
 
 ### Docstringy
 
-Google-style — matching core `krizky/hooks.py`:
+Google-style, jako v core (`krizky/hooks.py`, `krizky/plugin_helpers.py`):
 
 ```python
-def register_plugin_templates(env, path: Path) -> None:
-    """Insert a plugin's templates/ directory into the Jinja2 ChoiceLoader chain.
+def register_plugin_templates(env: jinja2.Environment, templates_dir: str | Path) -> None:
+    """Insert a plugin's templates directory into the Jinja2 ChoiceLoader chain.
 
-    Position: after project templates (first loader), before built-in krizky
-    templates. Idempotent — safe to call multiple times per env.
+    The loader is placed right after the first loader (project templates) and
+    before the built-in krizky templates. Calling it repeatedly with the same
+    path adds the loader only once. If ``env.loader`` is not a ChoiceLoader,
+    nothing happens.
 
     Args:
-        env: jinja2.Environment instance with a ChoiceLoader.
-        path: Path to the plugin's templates/ directory.
-
-    Raises:
-        ValueError: If env.loader is not a ChoiceLoader.
+        env: Jinja2 environment.
+        templates_dir: Path to the plugin's templates directory.
     """
 ```
 
@@ -86,7 +43,7 @@ Rules:
 - Prázdný řádek, pak detaily.
 - `Args:`, `Returns:`, `Raises:` sekce podle relevance.
 - Angličtina.
-- Modul-level docstring: 1 věta popisu modulu na prvním řádku (`"""krizky-photos plugin — photo pipeline."""`).
+- Modul-level docstring: 1 věta popisu modulu na prvním řádku (`"""Photo pipeline for krizky."""`).
 
 ### Logging
 
@@ -115,19 +72,15 @@ Konvence:
 - Custom exceptions: `<Feature>Error`, dědí z společné base pro daný plugin.
 
 ```python
-class PhotosError(Exception):
-    """Base class for krizky-photos errors."""
+class FooError(Exception):
+    """Base class for krizky-foo errors."""
 
 
-class FocalPointsError(PhotosError):
-    """Focal points file is malformed or missing."""
-
-
-class PhotoFetchError(PhotosError):
-    """Failed to fetch photo metadata from Google Drive."""
+class FooConfigError(FooError):
+    """Invalid krizky-foo configuration."""
 ```
 
-- Base class per plugin, aby uživatel mohl chytat `except PhotosError:`.
+- Base class per plugin, aby uživatel mohl chytat `except FooError:`.
 - Přepakování cizí exception: `raise MyError("kontext") from original_exc`.
 - **Ne** re-raise bez transformace — jen `raise` (zachová traceback).
 - V hooku (mimo CLI kontext) **ne** `click.ClickException` — použij plugin-specific exception. CLI handler ji chytí a přepakuje.
@@ -172,7 +125,7 @@ Pořadí (ruff `I` isort):
 Absolute imports vždy (`from krizky_photos.build import ...`), ne relative (`from .build import ...`).
 
 Lazy import (uvnitř funkce) použij **pouze** když:
-- Import je pomalý a funkce se často nevolá (photos delays google-api-client import).
+- Import je pomalý a funkce se často nevolá (např. klient Google API).
 - Vyhýbáš se circular import.
 - V obou případech přidej 1 řádkový komentář, PROČ.
 
@@ -189,7 +142,6 @@ Lazy import (uvnitř funkce) použij **pouze** když:
 
 - Function-based (`def test_x(...)`) — matching majority of ekosystém. **Ne** `class TestX`.
 - Fixtures v `conftest.py` (root nebo per-directory) pro sdílené setup. Ne redefinovat per-file.
-- Shared helpers (SQLite make_db apod.) — importovat z `krizky.testing` po jeho vzniku (viz consolidation proposal #4).
 - `pytest.fixture(scope="session"|"module"|"function")` — default `function` (isolate).
 - `pytest.mark.parametrize` pro data-driven testy — preferuj před smyčkami v testu.
 - Naming: `test_<what>_<condition>()` — např. `test_load_focal_points_missing_file_warns`.
@@ -202,31 +154,10 @@ Lazy import (uvnitř funkce) použij **pouze** když:
 - Refactor (přesun kódu bez změny chování) → existující testy musí projít; ne přidávat testy jen kvůli metricám.
 - Rename → grep testů na staré jméno, aktualizovat.
 
-## Package management (uv)
+## Závislosti
 
-Přidat závislost:
-```bash
-uv add <package>
-```
-
-Přidat dev závislost:
-```bash
-uv add --dev <package>
-```
-
-Odstranit:
-```bash
-uv remove <package>
-```
-
-**Pravidlo balíčků:** viz `guidelines/javascript.md` sekce "Package selection" — Python i JS balíčky mají identická kritéria (age, maintenance, license, popularity).
+Kritéria pro výběr balíčku jsou společná pro Python i JS: `javascript.md` › Package selection.
 
 ## Před commitem
 
-Pro každý změněný `*.py` soubor:
-1. `uv run ruff check --fix <file>` — pass.
-2. `uv run ruff format <file>` — apply.
-3. `uv run ruff check <file>` — clean (bez `--fix`).
-4. `uv run pytest tests/<related>` — pass.
-
-Pokud (4) padne → skill NEcommituje. Vrátí staging area (`git restore --staged <files>` + `git checkout <files>` pouze pokud user explicitně souhlasil s revertem; jinak jen `git restore --staged` a nechá files v pracovní kopii, aby uživatel viděl, co skill navrhoval).
+`scripts/verify` musí skončit s exit 0.

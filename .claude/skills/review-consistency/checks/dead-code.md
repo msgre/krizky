@@ -1,58 +1,23 @@
-# Check: dead code
+# Kontrola: mrtvý kód
 
-Cíl: najít symboly, soubory, config klíče a helpery, které už nikdo nepoužívá.
+Cíl: najít symboly, šablony, assety a config klíče, které nikdo nepoužívá.
 
-Pozor: dead code je snadné falešně detekovat (dynamic imports, hookspec bez implementace, reserved API pro budoucnost). Klasifikuj konzervativně.
+Mrtvý kód se snadno označí falešně: pluggy volá hookimpl dynamicky, šablony web volá podle jména, veřejné API může používat jen web. Než nález zapíšeš, ověř každý symbol grepem napříč core, všemi `../krizky-*/` a `../valasske_nebe_ng/`. Nepoužité importy a proměnné hlídá ruff, ty se nehlásí.
 
 ## Postup
 
-### Python
-1. Pro každý veřejný symbol (funkce, třída, konstanta) v pluginu i core: grep napříč core, všemi `../krizky-*` a webem `../valasske_nebe_ng/`, jestli ho někdo importuje/volá (kromě definice a testů). Web volá veřejné API ze šablon a může mít vlastní `plugins/*.py`.
-2. Pro každý private symbol (`_foo`): grep uvnitř toho modulu.
-3. Pro každý test: koresponduje s existujícím kódem?
-4. Pro každý TODO/FIXME komentář starší než 3 měsíce (git blame): flag.
+1. Pro každou veřejnou funkci, třídu a konstantu v core a pluginech: grep jména napříč projekty a webem, mimo definici a testy.
+2. Pro každou šablonu v `templates/` pluginu: grep jejího jména v `{% include %}`, `{% import %}`, `{% from %}`, `template:` v configu a Python kódu.
+3. Pro každý soubor v `assets/` pluginu: grep jména v šablonách a Python kódu (`inject_head`, `<link>`, `<script>`).
+4. Pro JS: funkce bez volání, data-atributy, které JS čte a šablona negeneruje, a naopak.
 
-### JS
-1. Funkce definovaná v IIFE a nevolaná — flag.
-2. Data-atributy hledané JS-em, které šablona nevygeneruje (grep šablony na `data-<name>`).
-3. Data-atributy vygenerované šablonou, které nikdo v JS nečte.
-4. Nepoužité CSS třídy (méně důležité, ale flag jako nice-to-have).
+## Pravidla
 
-### Config
-1. Pro každý plugin: seznam config klíčů, které plugin čte (grep `config.get(`, `photos_cfg.get(` atd.).
-2. Porovnej se `README.md` config example — jsou tam všechny klíče, které kód reálně čte?
-3. Jsou v README zdokumentované klíče, které kód nikde nečte? → dead config.
+- Veřejná funkce, třída nebo konstanta, kterou nevolá nikdo mimo testy → **recommended**. Když byla přidána za poslední dva týdny (`git log`), **nice-to-have** s otázkou „je to připravené pro další krok?“.
+- Metoda třídy pluginu bez `@hookimpl`, kterou nikdo nevolá → **recommended**.
+- Šablona nebo asset pluginu, na které nic neodkazuje → **recommended**.
+- Test, který testuje už neexistující kód, nebo fixtura, kterou žádný test nepoužívá → **recommended**.
+- Zakomentovaný kód delší než pět řádků → **nice-to-have**.
+- Nepoužité CSS třídy → **nice-to-have**.
 
-## Checklist
-
-### Python
-- [ ] Nepoužité importy (linter to obvykle chytá, ale někdy protikandidát pro type-checking-only importy).
-- [ ] Nepoužité funkce v `<plugin>/utils.py` (nebo obdobě).
-- [ ] Metody na plugin třídě, které nejsou `@hookimpl` decorated a nikdo je nevolá.
-- [ ] Vnořené třídy / dataclasses nikdy neinstancované.
-- [ ] Konstanty definované a nikde nepoužité.
-- [ ] Deprecated funkce s komentářem "will be removed" bez data odstranění.
-- [ ] Commented-out kód víc než 5 řádků → nice-to-have odstranit.
-
-### CLI příkazy
-- [ ] Zaregistrovaný CLI command, jehož existence je zapomenutá v README → doc drift, ne dead code.
-- [ ] CLI command zdokumentovaný, ale registrace zmizela z kódu → dead doc.
-
-### Templates a assets
-- [ ] Jinja šablona v `templates/` které nikdo `{% include %}` / `{% import %}` / `template=` neuvádí.
-- [ ] CSS/JS soubor v `assets/`, který žádný `inject_head` / `<link>` v šabloně nezmiňuje.
-- [ ] Fixtures/data v `tests/` nepoužité v žádném testu.
-
-### Hookspecs bez implementací
-- [ ] Hookspec definovaný v core, který 0 pluginů implementuje. Ne nutně dead — může být reserved. Flag jako `nice-to-have` s poznámkou.
-
-### Config drift
-- [ ] Klíč zdokumentovaný v README, kód ho nečte.
-- [ ] Klíč, který kód čte, ale README ho nezmiňuje.
-- [ ] Klíč čtený, ale výsledek nikde nepoužitý (načte se do proměnné, která pak leží).
-
-## Zvláštní pozornost
-
-- **False positive risk:** entry-point pluginy jsou volané pluggym dynamicky. Grep nemusí najít volání `PhotosPlugin.__init__`, ale je používaný. Před flag zkontroluj entry-point definice v `pyproject.toml`.
-- **Nedávno přidaný kód:** git log — pokud byl symbol přidán v posledních 2 týdnech, možná je připravovaný pro brzké použití. Ne blocker, spíš nice-to-have s poznámkou "je to úmysl?".
-- Kód v `.venv/`, `__pycache__/` a `node_modules/` kteréhokoli projektu — **nikdy** neanalyzuj.
+Hooky bez implementace patří do `hooks.md`, config klíče, které kód nečte, do `config.md`.

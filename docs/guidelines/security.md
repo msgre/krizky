@@ -1,6 +1,6 @@
 # Guidelines: security
 
-Load jen když finding dotýká: HTML output, SQL query, path handling, subprocess, external API calls, nebo secrets.
+Platí pro HTML výstup, SQL, cesty z configu, subprocess, externí API a secrets.
 
 ## HTML/XSS escape
 
@@ -17,23 +17,15 @@ Load jen když finding dotýká: HTML output, SQL query, path handling, subproce
 
 ## Path traversal
 
-Když plugin resolve-uje cesty ze user config:
+**Cesty z configu** jsou důvěryhodné. `config.yaml` píše vlastník webu a krizky ho spouští nad vlastním projektem. Plugin je převádí přes `resolve_path` z `krizky.plugin_helpers`: relativní cesta se vyhodnotí vůči `config_dir`, absolutní zůstane, `..` se neblokuje.
+
+**Cesty odvozené z dat** (slug záznamu, jméno souboru z Google Drive, hodnota z tabulky) důvěryhodné nejsou. Data může upravovat i někdo jiný než vlastník webu. Výsledná cesta po `Path.resolve()` musí ležet uvnitř cílového adresáře (typicky výstupu webu), jinak chyba:
 
 ```python
-def resolve_path(user_path: str, config_dir: Path) -> Path:
-    p = Path(user_path)
-    if p.is_absolute():
-        return p  # user explicit
-    resolved = (config_dir / p).resolve()
-    # Sanity check: konečná cesta musí být pod config_dir (žádné ../)
-    if config_dir.resolve() not in resolved.parents and resolved != config_dir.resolve():
-        raise ValueError(f"Path escapes config_dir: {user_path}")
-    return resolved
+target = (output_dir / f"{slug}.html").resolve()
+if not target.is_relative_to(output_dir.resolve()):
+    raise FooError(f"Path escapes output directory: {slug!r}")
 ```
-
-- Použij `Path.resolve()` k normalizaci.
-- Zkontroluj, že výsledek je pod `config_dir` — jinak `..` mohou dostat plugin mimo scope.
-- Výjimka: absolutní cesty user explicitně zadal — ne blokovat.
 
 ## Subprocess
 
@@ -54,18 +46,3 @@ def resolve_path(user_path: str, config_dir: Path) -> Path:
 - **JSON:** OK, native Python `json.loads()` je bezpečný.
 - **YAML:** `yaml.safe_load()`, **nikdy** `yaml.load()` (arbitrary code execution).
 - **Pickle:** **nikdy** unpickle user-provided data — arbitrary code execution.
-
-## Skill enforcement
-
-Skill při každé změně souboru, který spadá do security-relevant kategorií (HTML/SQL/subprocess/API), **rychle projede checklist**:
-
-- Pattern `.replace("&", "&amp;")` → warning, refactor na `html.escape`.
-- Pattern `f"...{var}..."` v SQL context → **stop**, refactor na parametrizovaný.
-- Pattern `yaml.load(` bez `safe_load` → **stop**, refactor.
-- Pattern `shell=True` v subprocess → warning, refactor pokud user vstup.
-- Pattern `pickle.load(` na user data → **stop**, refactor nebo zamítni.
-- Pattern `requests.<method>(url` bez `timeout=` → warning, přidat timeout.
-
-Pokud finding sám je security-related (např. "krizky-share používá ruční escape místo html.escape") → skill je gramotný to opravit dle výše.
-
-Pokud finding **není** security-related, ale při editaci skill zahlédne security anti-pattern → **flag do output** (spotted, not fixed), NErefactor mimo scope.
