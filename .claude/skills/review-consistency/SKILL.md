@@ -1,119 +1,123 @@
 ---
 name: review-consistency
-description: Review the core krizky project and all krizky plugins for consistency, duplication, plugin-API adequacy, and cross-project coherence. Produces markdown reports in `reports/`. Runs on Python + adjacent JavaScript together. Invoke with no argument for full sweep, or with a project name (e.g. `krizky-photos`) to narrow to one project (still reads core + other plugins as context).
+description: Revize konzistence core krizky a všech pluginů krizky-*. Hledá duplicitu vhodnou k přesunu do core, odchylky od guidelines a společných vzorů a slabá místa plugin API. Výstupem jsou reporty v `reports/`. Bez argumentu projde všechny projekty, s názvem projektu (např. `krizky-photos`) zaměří report na něj.
 ---
 
 # review-consistency
 
-Read this file first, then load the individual check files under `checks/` as you need them. Each check file has a focused checklist for one topic. You don't have to run every check in every invocation — start with the ones the user asks about; if they invoke with no argument, run all of them.
+Revize konzistence mezi core a pluginy, které sdílejí plugin API. Kontroluje Python i JavaScript pluginů dohromady, protože JS je vždy doplněk konkrétního Python pluginu.
 
-## What this skill does
+Tři cíle, v tomto pořadí:
 
-Reviews a **core project + set of plugins** that share a plugin API, and reports where they've drifted out of alignment. It looks at Python code and any JavaScript assets that live inside those plugins (JS is always a supplement to a Python plugin — treat them together).
+1. **Duplicita**: kód opakovaný v pluginech, který patří do core.
+2. **Konzistence**: kód všech projektů má působit jako od jednoho autora (pojmenování, vzory, chyby, dokumentace, testy, config).
+3. **Adekvátnost API**: sedí hooky a veřejné funkce core tomu, co pluginy skutečně potřebují?
 
-Three goals, in this order:
+## Projekty
 
-1. **Find duplication** — code repeated across plugins that belongs in core.
-2. **Enforce consistency** — code across all projects should read like one author wrote it (naming, patterns, error handling, docs, tests, config).
-3. **Assess plugin API adequacy** — do the current hooks still fit? Should any be added, changed, removed, replaced?
-
-Extended checks (all opt-in by topic): config style, error/logging, data naming, tests, docs, dead code, core↔plugin API boundaries.
-
-## Discovery: what projects exist
-
-Run the skill from the core repo (`/Users/msgre/projects/muzeum/krizky`). Every project is a separate git repo with its own GitHub remote (`github.com/msgre/krizky*`). Plugins live next to core, not inside it.
-
-Discovery rule:
-
-- **Core** = the current repo. It contains `krizky/hooks.py` (the pluggy hookspec definitions) and `krizky/plugin_manager.py`.
-- **Plugins** = sibling directories `../krizky-*/` (or wherever the user points), each containing a `pyproject.toml` with a `[project.entry-points."krizky"]` section pointing at a `plugin` object.
-- **User site** = `../valasske_nebe_ng/`, a real website built with core and all plugins. Don't review it. Use it as context for how the API is actually consumed (its `config.yaml`, `templates/`, `assets/`), especially before calling something dead code or project-specific.
-
-Run this to enumerate:
+Skill se spouští z core (`/Users/msgre/projects/muzeum/krizky`). Každý projekt je samostatné git repo.
 
 ```bash
-# Core (prints krizky/hooks.py)
+# core: soubor s hookspecs
 grep -l 'HookspecMarker("krizky")' -r krizky --include='*.py'
-# Plugins
+# pluginy: sourozenecké adresáře s entry pointem
 grep -l 'entry-points."krizky"' ../krizky-*/pyproject.toml
 ```
 
-If the user passed an argument (e.g. `/review-consistency krizky-photos`), narrow the **reporting focus** to that project — but you still read core + all other plugins as context, because consistency is a cross-project property.
+- **Core** je toto repo.
+- **Pluginy** jsou sourozenecké adresáře `../krizky-*/` s entry pointem `krizky`.
+- **Web** `../valasske_nebe_ng/` je reálný web postavený na core a všech pluginech. Nereviduje se. Slouží jako doklad, jak se API skutečně používá (`config.yaml`, `templates/`, `assets/`, případně `plugins/*.py`). Než něco označíš za mrtvý kód nebo za věc jednoho webu, ověř to v něm.
 
-## Ground truth: read before checking
+Argument s názvem projektu zužuje jen to, o čem se píše report. Core a ostatní pluginy čti dál jako kontext, protože konzistence je vlastnost napříč projekty. Argument s tématem (např. „hooky“, „testy“) zužuje, které skupiny kontrol se spustí.
 
-Before running any check, load these into your context (they're the yardstick against which everything else is compared):
+Adresáře `.venv/`, `__pycache__/`, `node_modules/` a přibalené cizí JS knihovny se nečtou.
 
-1. `krizky/hooks.py` — the plugin API surface (hookspecs, signatures, docs).
-2. `krizky/plugin_manager.py` — how plugins are discovered/loaded.
-3. `docs/guidelines/*.md` — the agreed conventions for core and all plugins (`python.md`, `javascript.md`, `cross-language.md`, `docs-sync.md`, `security.md`). They outrank anything inferred from code.
-4. Core `CLAUDE.md` and `README.md` — project conventions.
-5. Each plugin's `plugin.py` (entry-point class) — how it wires into the API.
-6. Each plugin's `README.md`, `CLAUDE.md` and (if present) `docs/`.
+## Podklady
 
-Lint and formatting are enforced mechanically. Every repo prepared for swarm has `scripts/verify` with the same ruff config, and plugins with JS also the same ESLint and Prettier config. Don't report what those tools already enforce. Flag only a repo whose config differs from the others or that lacks `scripts/verify`.
+Tohle je měřítko, se kterým se vše porovnává:
+
+1. `docs/plugins.md`: **definice veřejného API**. Hooky a funkce, které tu jsou popsané, jsou veřejné. Ostatní z balíčku `krizky` je interní.
+2. `krizky/hooks.py` a `krizky/plugin_manager.py`: hookspecs a načítání pluginů.
+3. `docs/guidelines/*.md`: dohodnuté konvence pro core i pluginy.
+4. `CLAUDE.md` a `README.md` core.
+5. U každého pluginu `plugin.py`, `pyproject.toml`, `README.md` a `CLAUDE.md`.
+
+Fakta o projektech (které moduly existují, co je veřejné, jaké hooky jsou) zjišťuj z těchto souborů za běhu. Instrukce v `checks/` popisují pravidla, ne aktuální stav kódu.
+
+Formátování a lint hlídá `scripts/verify` v každém repu (ruff, u pluginů s JS i ESLint a Prettier). Co tyto nástroje vynucují, se nehlásí. Hlásí se jen repo, kterému `scripts/verify` chybí, nebo které má konfiguraci odlišnou od ostatních.
+
+## Co je správně
+
+Když se projekty liší, rozhoduj takto:
+
+1. **Guidelines.** Když otázku řeší `docs/guidelines/`, je to kanonická podoba a odchylka je nález. Když guideline zjevně neodpovídá dnešnímu stavu (popisuje „aktuální stav“, který už neplatí, nebo odkazuje na neexistující soubor), nevymáhej ji. Zapiš ji do sekce „Guidelines k revizi“ v `summary.md`.
+2. **Precedent v core.** Vzor, který existuje v `krizky/`, je kanonický a pluginy se mu mají přizpůsobit.
+3. **Vzor jen v pluginech.** Vítěze nevybírej. Popiš obě varianty neutrálně a jednu navrhni jako kanonickou v `proposals/`. Rozhodnutí patří uživateli.
+4. **Jen existující konvence.** Skill srovnává to, co už v projektech je. Nová konvence smí vzniknout jen jako návrh v `proposals/`.
 
 ## Severity
 
-Every finding gets one of three tags. Pick conservatively — inflating severity dilutes the signal.
+Každý nález má jednu severitu. Volí se střídmě, nafouknutá severita ředí signál.
 
-- **blocker** — actively breaks consistency in a way users or maintainers will hit. Examples: two plugins define the same config key with different meanings; a plugin reaches into a private core symbol; a hookspec signature is called inconsistently.
-- **recommended** — real drift worth fixing, but nothing breaks today. Examples: naming convention diverges (`output_dir` vs `output`), inconsistent logger setup, docstring style split, duplicated helper that belongs in core.
-- **nice-to-have** — cosmetic or preference-level. Examples: comment tone, order of dict keys, unused imports.
+- **blocker**: rozbíjí konzistenci tak, že na to narazí uživatel nebo správce. Například dva pluginy mají stejný config klíč s jiným významem, plugin importuje soukromý symbol core (`_foo`), plugin implementuje hook, který jeho minimální verze core nezná.
+- **recommended**: skutečný rozjezd, dnes nic nerozbíjí. Například jiné pojmenování téhož, plugin si píše vlastní verzi helperu z `krizky.plugin_helpers`, plugin závisí na nezdokumentované funkci core.
+- **nice-to-have**: kosmetika a preference.
 
-## Deciding what's "correct"
+## Postup
 
-When two projects disagree, decide as follows:
+### 1. Příprava
 
-1. **Guidelines win.** If `docs/guidelines/` decides the question, that's the canonical form. Flag deviations, don't reopen the decision.
-2. **Core precedent wins next.** If the pattern exists in `krizky/`, that's the canonical form; plugins should conform.
-3. **If it exists only in plugins:** don't pick a winner. Describe both variants neutrally, name each variant, and propose one as canonical in a `proposals/` document — but leave the final call to the user.
-4. **Never invent a new convention** the user hasn't already used somewhere. This skill is about aligning what exists, not inventing style.
+Zjisti projekty, poznač si fokus z argumentu a přečti podklady. Najdi předchozí report: nejnovější adresář v `reports/` podle jména. Hotovo, když máš seznam projektů, cestu k předchozímu reportu (nebo víš, že žádný není) a přečtené `docs/plugins.md`.
 
-## Workflow
+### 2. Kontroly po skupinách
 
-1. **Discover** projects (core + plugins). If user passed a project name, note it as the report focus.
-2. **Load ground truth** (hooks.py, plugin_manager.py, core docs, each plugin's plugin.py + README).
-3. **Pick checks to run.** Full sweep = all files in `checks/`. Narrow invocation = user-mentioned topics, else default to all.
-4. **For each check:** open the corresponding `checks/*.md`, walk its checklist, collect findings. If a check is heavy (e.g. `duplication.md` — needs to compare code across many files), consider spawning an `Explore` sub-agent to gather evidence and return a compact summary rather than pulling raw files into your own context.
-5. **Assemble reports** per `report-format.md`. One file per project + one summary + optional proposals.
-6. **Announce output locations** to the user at the end. Don't try to auto-open or auto-commit the reports.
+Kontroly jsou v `checks/` a běží v šesti skupinách. Každá skupina čte stejný kód, proto běží v jednom sub-agentovi:
 
-## Report location
+| Skupina | Kontroly |
+|---|---|
+| api | `api-boundaries.md`, `hooks.md` |
+| duplicita | `duplication.md` |
+| config-data | `config.md`, `naming-data.md` |
+| python | `python-style.md`, `error-logging.md` |
+| js | `js-style.md` (jen když některý plugin má JS) |
+| testy-docs | `tests.md`, `docs.md`, `dead-code.md` |
 
-Write reports to `reports/YYYY-MM-DD-HHMM/` in the core repo, where earlier reports are committed. Timestamped so re-runs don't overwrite. Create the directory if missing.
+Spusť skupiny paralelně jako sub-agenty `general-purpose`. Do zadání každého dej:
 
-Full layout:
+- seznam projektů a fokus,
+- cesty k podkladům (sekce výše) a ke kontrolám skupiny, které má přečíst celé,
+- blok nálezu z `report-format.md`,
+- že jen čte kód a nic nezapisuje,
+- že vrací nálezy jako bloky nálezu seskupené podle projektu, a k tomu podklady pro `proposals/` (u skupin api, duplicita a config-data),
+- že každý nález cituje konkrétní `soubor:řádek`, který sám otevřel.
 
-```
-reports/2026-08-17-1430/
-  summary.md                      # cross-cutting patterns + top consolidation candidates
-  core.md                         # findings scoped to core (krizky/)
-  plugin-krizky-photos.md         # one per plugin
-  plugin-krizky-json.md
-  ...
-  proposals/                      # only created if a check produced one
-    config-style-guide.md         # canonical config conventions (if config check ran)
-    hook-changes.md               # add/change/remove hookspec proposals (if hooks check ran)
-    consolidation-to-core.md      # duplicated code to lift into core (if duplication check ran)
-```
+Hotovo, když se vrátily všechny spuštěné skupiny.
 
-See `report-format.md` for the exact structure of each file (headings, finding format, cross-references).
+### 3. Ověření
 
-## What this skill does NOT do
+Každý nález se severitou blocker nebo recommended ověř sám: otevři místa z `Kde` a potvrď, že tvrzení platí. U mrtvého kódu a „věcí jednoho webu“ prohledej i `../valasske_nebe_ng/`.
 
-- **Does not modify code.** Reports only. Findings are implemented separately with `/swarm:run`, which can take a report from `reports/` as its input.
-- **Does not run tests** to determine correctness. Consistency ≠ correctness. If a pattern is inconsistent but both variants work, still flag it.
-- **Does not review clean code per se** (readability inside a single file, function length, complexity metrics). That's a separate, per-repo concern — a different skill.
-- **Does not touch `.venv/`, `__pycache__/`, `node_modules/`, or vendored third-party JS.** Skip those directories during discovery and grep.
+- Potvrzený nález zůstává.
+- Vyvrácený nález vyřaď a započítej do statistiky „vyřazeno při ověření“.
+- Nález, který nejde rozhodnout, ponech a do `Co` připiš „Nejisté: …“ s důvodem.
 
-## Output language
+Duplicitní nálezy ze dvou skupin slouč do jednoho. Hotovo, když má každý blocker a recommended jeden z těchto výsledků.
 
-Write reports in **Czech** (the codebase's user-facing docs are Czech). Keep code identifiers, file paths, and technical terms in original form. Section headings can be Czech too.
+### 4. Srovnání s předchozím reportem
 
-## Notes on running
+Každému nálezu nastav `Stav`: `nový`, nebo `přetrvává` s odkazem na nález v předchozím reportu. Blocker a recommended z předchozího reportu, které v novém nejsou, a jejich místo v kódu se změnilo, vypiš v `summary.md` v sekci „Vyřešeno od minula“. Hotovo, když má stav každý nález.
 
-- The skill is read-only w.r.t. code. Only writes are inside `reports/`.
-- `TODO.md` everywhere and `PLAN.md` in plugins are local notes listed in `.gitignore`. Don't flag their absence or content.
-- Don't create empty proposal files. `proposals/config-style-guide.md` only exists if the config check actually produced a coherent guide.
-- If the codebase has changed since the ground-truth was loaded (unlikely mid-run), re-read rather than assuming.
+### 5. Report
+
+Zapiš report do `reports/YYYY-MM-DD-HHMM/` podle `report-format.md`. Na konci uživateli vypiš cestu k reportu a počty nálezů podle severity. Report necommituj.
+
+## Mimo rozsah
+
+- Úpravy kódu. Nálezy implementuje `/swarm:run`, který report z `reports/` vezme jako vstup.
+- Správnost chování. Konzistence není správnost: když jsou dvě varianty nekonzistentní a obě fungují, je to pořád nález.
+- Čistota kódu uvnitř jednoho souboru (délka funkcí, složitost).
+- `TODO.md` ve všech repech a `PLAN.md` v pluginech jsou lokální poznámky v `.gitignore`. Jejich obsah ani absence nejsou nálezy.
+
+## Jazyk
+
+Report se píše česky. Identifikátory, cesty a technické termíny zůstávají v původní podobě.

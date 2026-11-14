@@ -1,204 +1,136 @@
-# Report format
+# Formát reportu
 
-All reports go under `reports/YYYY-MM-DD-HHMM/`. Prose is Czech; code, keys, and paths stay as-is.
+Reporty se zapisují do `reports/YYYY-MM-DD-HHMM/`. Text je česky, kód, klíče a cesty zůstávají beze změny.
 
-## Finding block (used everywhere)
-
-Every finding uses this structure. Keep it tight — no filler prose.
-
-```markdown
-### [SEVERITY] Krátký název (max ~70 znaků)
-
-**Kde:** `plugin-name/path/to/file.py:line` (i více míst, oddělených čárkou)
-
-**Co:** 1–2 věty popisu drift/duplicity/problému.
-
-**Proč vadí:** 1 věta — reálný dopad (nekonzistence, matoucí pro čtenáře, blokuje refaktor, atd.).
-
-**Doporučení:** konkrétní krok. Pokud jde o volbu mezi variantami, uveď obě a preferovanou.
-
-**Reference:** (volitelné) odkazy na core precedent nebo jiné plugin varianty.
+```
+reports/YYYY-MM-DD-HHMM/
+  summary.md                   # vzorce napříč projekty, priority, statistiky
+  core.md                      # nálezy v core
+  plugin-krizky-<jméno>.md     # jeden soubor na plugin
+  proposals/                   # jen návrhy, které kontroly skutečně vytvořily
+    consolidation-to-core.md   # skupina duplicita
+    hook-changes.md            # skupina api
+    config-style-guide.md      # skupina config-data
 ```
 
-Severity je jedno z: `blocker`, `recommended`, `nice-to-have`.
+Prázdné soubory, prázdné sekce ani věty typu „žádná zjištění“ se nepíšou. Chybějící sekce to říká sama.
 
-## Per-project report — `core.md` / `plugin-<name>.md`
+## Blok nálezu
+
+Každý nález má tuto podobu, bez vaty:
 
 ```markdown
-# <projekt> — revize konzistence
+### [SEVERITA] Krátký název (max. ~70 znaků)
+
+**Kde:** `krizky-<jméno>/cesta/soubor.py:řádek` (více míst odděl čárkou)
+
+**Co:** 1–2 věty: v čem je rozjezd, duplicita nebo problém.
+
+**Proč vadí:** 1 věta o skutečném dopadu.
+
+**Doporučení:** konkrétní krok. Při volbě mezi variantami uveď obě a preferovanou.
+
+**Pravidlo:** odkud plyne kanonická podoba (`docs/guidelines/python.md` › Logging, precedent v `krizky/render.py:40`, nebo „návrh, viz proposals/…“).
+
+**Stav:** nový | přetrvává (`reports/<předchozí>/plugin-krizky-<jméno>.md` › „<název nálezu>“)
+```
+
+`SEVERITA` je `blocker`, `recommended` nebo `nice-to-have`.
+
+## `core.md` a `plugin-<jméno>.md`
+
+```markdown
+# <projekt>: revize konzistence
 
 Datum: YYYY-MM-DD HH:MM
-Reviewer: Claude Code (review-consistency skill)
 
 ## Souhrn
 
-- N blocker
-- N recommended
-- N nice-to-have
-
-Nejdůležitější zjištění: (2–3 věty)
+- N blocker, N recommended, N nice-to-have
+- Nejdůležitější: 2–3 věty.
 
 ## Zjištění
 
-### Konfigurace
-<finding blocks>
-
-### Hooky
-<finding blocks>
-
-### Python style
-<finding blocks>
-
-### JavaScript style
-<finding blocks — vynechat sekci pokud plugin nemá JS>
-
-### Error handling a logging
-<finding blocks>
-
-### Pojmenování v datech
-<finding blocks>
-
+### Hraniční API a hooky
+### Duplicita
+### Konfigurace a pojmenování dat
+### Python a chyby
+### JavaScript
 ### Testy
-<finding blocks>
-
 ### Dokumentace
-<finding blocks>
-
-### Dead code
-<finding blocks>
-
-### Hraniční API (jen pro pluginy — core tuto sekci vynechá)
-<finding blocks>
+### Mrtvý kód
 ```
 
-Prázdné sekce vynechej. Nepiš "žádná zjištění" — absence sekce už to říká.
+Nálezy v sekci řaď podle severity.
 
-## Summary report — `summary.md`
+## `summary.md`
 
 ```markdown
 # Souhrn revize konzistence
 
 Datum: YYYY-MM-DD HH:MM
-Rozsah: <full sweep | jen krizky-photos jako focus, ostatní jako kontext>
+Rozsah: všechny projekty | fokus `krizky-<jméno>` (ostatní jako kontext)
+Předchozí report: `reports/<adresář>/` | žádný
 
-Projekty v revizi:
-- `krizky` (core) — viz [core.md](core.md)
-- `krizky-photos` — viz [plugin-krizky-photos.md](plugin-krizky-photos.md)
-- ...
+## Priority
 
-## Top priority
-
-Seznam nejdůležitějších věcí napříč projekty, seřazený podle dopadu (ne podle abecedy).
-Každá položka = 1 věta + odkaz na příslušný per-project report.
+Nejdůležitější nálezy napříč projekty, seřazené podle dopadu. Každý: 1 věta a odkaz na nález.
 
 ## Vzorce napříč projekty
 
-Sekce pro cross-cutting patterny — věci, které nejsou "chyba jednoho projektu",
-ale vzorec, který se objevuje ve více projektech.
+### <Název vzorce>
 
-### <Jméno vzorce> (např. "Duplicitní logika načítání assetů")
-
-**Kde:** seznam projektů + souborů.
-
+**Kde:** projekty a soubory.
 **Popis:** co se opakuje.
+**Návrh:** konsolidace do core, sjednocení, nebo odkaz do `proposals/`.
 
-**Návrh:** konsolidovat do core / sjednotit styl / vytvořit shared helper.
+## Vyřešeno od minula
 
-**Detail:** odkaz na `proposals/consolidation-to-core.md` sekce X, pokud relevantní.
+Blocker a recommended z předchozího reportu, které už neplatí. Každý: název a odkaz na starý nález.
 
-## Kandidáti na konsolidaci do core
+## Guidelines k revizi
 
-Krátký seznam s odkazy do `proposals/consolidation-to-core.md`.
-
-## Návrhy na změny plugin API
-
-Krátký seznam s odkazy do `proposals/hook-changes.md`.
+Místa v `docs/guidelines/`, která neodpovídají dnešnímu stavu. Každé: soubor › sekce, v čem nesedí, návrh úpravy.
 
 ## Statistiky
 
-- Počet zjištění celkem: N (X blocker, Y recommended, Z nice-to-have)
-- Rozložení podle projektu: tabulka
-- Rozložení podle tématu: tabulka
+| | blocker | recommended | nice-to-have |
+|---|--:|--:|--:|
+| <projekt> | | | |
+| celkem | | | |
+
+Nových: N, přetrvává: N, vyřešeno od minula: N, vyřazeno při ověření: N.
 ```
 
 ## Proposals
 
-Proposals jsou samostatné dokumenty, které vzniknou jen tehdy, pokud check produkoval smysluplný obsah. Nevytvářej prázdné proposals.
+### `proposals/consolidation-to-core.md`
 
-### `proposals/config-style-guide.md`
-
-Pouze pokud config check měl dost materiálu na sjednocující dokument. Struktura:
+Kandidáti seřazení podle dopadu (ušetřené řádky × počet pluginů).
 
 ```markdown
-# Config style guide (návrh)
+## <Název kandidáta>
 
-Odvozeno z revize <datum>. Popisuje konvence použité v core + většině pluginů.
-Slouží jako vodítko pro budoucí implementace config options.
-
-## Konvence pojmenování
-
-- <pravidlo> — <příklad z existujícího kódu>
-- ...
-
-## Struktura sekcí
-
-...
-
-## Interpolace hodnot
-
-...
-
-## Defaulty a "vypnuto"
-
-...
-
-## Otevřené otázky
-
-Seznam míst, kde konvence není jasná — čeká na uživatelské rozhodnutí.
+**Síla vzoru:** strong | medium
+**Výskyty:**
+- `krizky-<a>/soubor.py:12-45`: varianta A
+- `krizky-<b>/soubor.py:8-40`: varianta B (rozdíl: …)
+**Návrh API v core:** modul a signatura; přednostně rozšíření `krizky.plugin_helpers`.
+**Riziko:** v čem se výskyty liší a jestli to helper unese bez nafouknutých parametrů.
 ```
 
 ### `proposals/hook-changes.md`
 
 ```markdown
-# Návrhy na změny plugin API
+## Přidat | Upravit | Zvážit odstranění: `<hook>`
 
-## Přidat hook: `<name>`
-
-**Motivace:** vzorec, který X pluginů řeší ad-hoc.
-**Signatura:** `def hook_name(...)`.
-**Kdo by ho implementoval:** seznam pluginů, které by z toho těžily.
-**Alternativy:** (proč hook a ne shared helper / mixin / event bus).
-
-## Upravit hook: `<name>`
-
-**Aktuální signatura:** ...
-**Navrhovaná signatura:** ...
-**Důvod:** ...
-**Migrace:** ...
-
-## Zvážit odstranění: `<name>`
-
-**Důvod:** N implementací / používá se jen X-krát / duplikuje jiný hook.
-**Riziko:** ...
+**Motivace:** vzor z kódu s odkazy `soubor:řádek`.
+**Signatura:** současná → navrhovaná.
+**Kdo by to využil:** pluginy.
+**Zvážená alternativa:** helper v `plugin_helpers`, zdokumentování existující funkce a podobně, a proč nestačí.
+**Migrace:** co se musí změnit v pluginech a v jakém pořadí.
 ```
 
-### `proposals/consolidation-to-core.md`
+### `proposals/config-style-guide.md`
 
-```markdown
-# Kandidáti na konsolidaci do core
-
-Kandidáty seřaď podle "efektu na řádek konsolidovaného kódu"
-(kolik LOC ušetří napříč pluginy).
-
-## <Jméno kandidáta>
-
-**Vzorec:** stručný popis, co se opakuje.
-
-**Výskyty:**
-- `krizky-photos/foo.py:12-45` — varianta A
-- `krizky-json/bar.py:8-40` — varianta B (drobný rozdíl: X)
-
-**Návrh API v core:** kam by to patřilo (`krizky/helpers.py`?), jaká signatura.
-
-**Riziko / poznámky:** liší se pluginy v detailu, který by měl helper pokrýt parametrem?
-```
+Jen když skupina config-data našla aspoň tři konvence, které většina projektů už dodržuje. Sekce: pojmenování klíčů, umístění sekcí, cesty, defaulty a vypnutí, otevřené otázky k rozhodnutí uživatele.

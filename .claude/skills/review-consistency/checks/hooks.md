@@ -1,59 +1,35 @@
-# Check: adekvátnost plugin API (hooky)
+# Kontrola: adekvátnost hooků
 
-Cíl: zjistit, jestli současná sada hookspecs stále vyhovuje. Výstup: draft `proposals/hook-changes.md`, pokud najdeš věci k přidání/změně/odebrání.
-
-## Kontext
-
-Plugin API je definované v `krizky/hooks.py` přes pluggy. Každý hookspec má docstring, který popisuje semantics (kdy se volá, `firstresult`, apod.). Plugin loadning je v `krizky/plugin_manager.py`.
+Cíl: zjistit, jestli sada hooků v `krizky/hooks.py` odpovídá tomu, co pluginy dělají. Podklady pro `proposals/hook-changes.md`.
 
 ## Postup
 
-1. Vypiš všechny hookspecs z `krizky/hooks.py` (jméno, signatura, `firstresult`, docstring).
-2. Pro každý plugin: kterou podmnožinu hookspecs implementuje (`@hookimpl` decorated metody v `plugin.py`).
-3. Sestav matici (hooks × plugins) — jaké pole je "husté", jaké prázdné.
-4. Projdi checklist níže.
+1. Z `krizky/hooks.py` vypiš hookspecs: jméno, parametry, `firstresult`.
+2. Pro každý plugin a pro `../valasske_nebe_ng/plugins/*.py` vypiš metody s `@hookimpl`.
+3. Sestav matici hook × implementace.
+4. Projdi těla implementací a hledej vzory z pravidel níže.
 
-## Checklist
+## Pravidla
 
-### Nevyužité hookspecs
-- [ ] Existuje hookspec, který nikdo neimplementuje? (Pokud ano — je to reserved pro budoucnost, nebo mrtvé API?)
-- [ ] Existuje hookspec s právě jednou implementací? Je to jednorázová únik-hatch, nebo znak, že "extension point" nebyl potřeba obecně?
+### Využití hooků
 
-### Chybějící hookspecs (kandidáti na přidání)
-Zkoumej pro každý plugin:
-- [ ] Dělá plugin něco na "životním cyklu" (start buildu, konec buildu, per-record, per-page), kde současné hooky nejsou v přesně tom bodu, kde by potřeboval? → potenciální nový hook.
-- [ ] Sahá plugin do core internals (např. `from krizky.render import ...`) místo aby dostal data přes hook? → nový hook by zbavil coupling.
-- [ ] Duplikuje více pluginů stejné boilerplate okolo hooků (např. všichni v `prepare_jinja2_environment` dělají `env.globals[...] = ...` se stejným vzorcem)? → možná chybí vyšší-level hook (`register_template_global`).
-- [ ] Řeší plugin něco monkey-patchem, výjimkovou cestou nebo re-parsováním configu? → tam patří hook.
+- Hook bez jediné implementace v pluginech i ve webu → **nice-to-have**, návrh „zvážit odstranění“.
+- Hook s jedinou implementací: v návrhu posuď, jestli jde o obecný bod rozšíření, nebo o únikovou cestu jednoho pluginu. Samostatný nález z toho nedělej.
 
-### Konzistence signatur
-- [ ] Přidávaly se parametry existujícím hookům postupně (např. `config_dir` přidán později do `prepare_jinja2_environment`)? Kdo z pluginů nový parametr přijal, kdo ne?
-- [ ] Pluggy dovolí plugin vynechat neznámý param — ale konzistence pro čtenáře trpí. Doporuč sjednocení.
-- [ ] Používají různé hooky konzistentně pojmenované parametry pro stejnou věc? (`config`, `cfg`, `configuration`; `config_dir` vs `root_dir` vs `base_dir`.)
-- [ ] `firstresult` je použit tam, kde má smysl (jedna implementace vyhrává), a nikde jinde?
+### Chybějící rozhraní
 
-### Dokumentace hookspecs
-- [ ] Docstring každého hookspec popisuje: (1) kdy se volá, (2) kolik reimplementací se očekává, (3) sémantiku návratové hodnoty, (4) jaké argumenty a proč?
-- [ ] Existuje-li v docstringu "backward-compatible" poznámka (viz `prepare_jinja2_environment` s `config_dir`), je to pravda pořád? Nebo už všechny pluginy nový param používají a poznámku lze odstranit?
+Každý z těchto vzorů je **recommended** s podkladem do `proposals/hook-changes.md`:
 
-### Registrace pluginů a lifecycle
-- [ ] Registrační logika v `plugin_manager.py` — je jasné, které priority má co? (Local dir > entry points > builtin.)
-- [ ] Objevily se nějaké lifecycle problémy (např. `register_commands` je volaný před `config_dir` je známý — je to fundamentální nebo řešitelné novým hookem `configure`)?
-- [ ] Má nějaký plugin logiku typu "za jistých podmínek se zaregistruj, jinak ne"? Dělá to čistě, nebo hackem?
+- Plugin potřebuje informaci, kterou žádný hook nedává, a získává ji oklikou: znovu parsuje config, odvozuje cestu, importuje interní funkci core.
+- Plugin dělá práci ve špatném bodě životního cyklu (např. jednorázovou práci v hooku volaném pro každou stránku a hlídá si to příznakem).
+- Dva a více pluginů opakuje v jednom hooku stejný postup. Nejdřív zvaž helper v `krizky.plugin_helpers` (skupina duplicita), hook navrhni jen tehdy, když helper nestačí.
 
-### Doporučení k jednotlivým hookům
+### Signatury a dokumentace
 
-Pro každý existující hook rozhodni:
+- Stejná věc má v různých hookspecs různé jméno parametru (`config_dir` × `base_dir`) → **recommended**.
+- Implementace vynechávají parametry, které nepotřebují. To pluggy dovoluje a je to běžný idiom, není to nález.
+- `firstresult=True` u hooku, kde se mají uplatnit všechny implementace, nebo naopak → **blocker**.
+- Docstring hookspec neuvádí, kdy se hook volá, kolikrát, a co znamená návratová hodnota → **recommended**.
+- Popis hooku v `docs/plugins.md` neodpovídá `krizky/hooks.py` nebo volání v core → **blocker** (dokumentace lže).
 
-- **Ponechat beze změny** — pokud je používán ≥2 pluginy nebo je zjevně obecný/užitečný.
-- **Rozšířit signaturu** — pokud implementace potřebují další parametr a musí ho získávat oklikou.
-- **Sloučit s jiným** — pokud dva hooky mají překrývající se zodpovědnosti.
-- **Zúžit / odstranit** — pokud je jen 0-1 implementací a užití je specifické.
-
-## Formát návrhů
-
-Sepiš do `proposals/hook-changes.md` podle šablony v `report-format.md`. Pro každý návrh uveď:
-- motivaci vzorem z reálného kódu (odkaz na plugin/soubor/řádek),
-- signaturu,
-- kdo by z toho těžil (které pluginy by hook implementovaly),
-- alternativu, kterou jsi zvažoval a zamítl (shared helper, mixin, event bus, atd.).
+Každý návrh v `proposals/hook-changes.md` obsahuje motivaci s odkazy `soubor:řádek`, signaturu, kdo by ho využil, zváženou alternativu a migraci.

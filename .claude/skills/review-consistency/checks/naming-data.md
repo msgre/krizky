@@ -1,51 +1,20 @@
-# Check: pojmenování v datech
+# Kontrola: pojmenování v datech
 
-Cíl: identická sémantika = identické jméno, napříč SQL sloupci, dict klíči, config klíči, URL parametry, JS data-atributy.
+Cíl: stejný význam má stejné jméno ve sloupcích SQL, klíčích dictů, configu, data-atributech a JS.
+
+Pravidla transformace mezi vrstvami (`snake_case` v Pythonu a YAML, `camelCase` v JS, `kebab-case` v data-atributech) popisuje `docs/guidelines/cross-language.md` › Naming across the stack.
 
 ## Postup
 
-1. Prohlédni core `db.py`, `query.py` — jaké klíče generuje pro record dicty.
-2. Grep `record["`, `record.get(` napříč pluginy — jaká pole tam očekávají.
-3. Grep photo dict klíče, page dict klíče — konzistentní vs plugin-specific.
-4. Zaznamenej mapování "sémantika → jméno" a najdi rozjezdy.
+1. Z `krizky/db.py` a `krizky/query.py` zjisti, jaké klíče mají záznamy, kategorie a stránky.
+2. Vypiš, jaká pole pluginy čtou: `grep -rn 'record\[\|record.get(\|record\.' ../krizky-*/`.
+3. Vypiš klíče dictů, které pluginy předávají do šablon nebo do JS (photo dict, config pro JS, GeoJSON vlastnosti).
+4. Sestav mapu „význam → jména“ napříč projekty a hledej, kde má jeden význam víc jmen nebo jedno jméno víc významů.
 
-## Checklist
+## Pravidla
 
-### Identifikátory záznamu
-- [ ] `row_number` (interní pořadové), `id`, `slug`, `key` — každé má jasnou sémantiku?
-- [ ] Photo dict používá `base_name` — ostatní strukturované entity (record, category, tag) používají analogické jméno pro "primary key" nebo něco jiného?
-- [ ] URL slug: `slug` — konzistentně napříč záznamy? Nebo někde `handle`, `permalink`, `path`?
-
-### URL a cesty
-- [ ] URL: `url` vs `href` vs `link` — sjednocené?
-- [ ] Absolutní vs relativní URL — vlastnost objektu, nebo se řeší v šabloně?
-- [ ] Path v souborech: `path` vs `filepath` vs `file_path`?
-- [ ] Adresář: `dir`, `folder`, `directory`?
-
-### Kategorie a tagy
-- [ ] Category klíč se jmenuje `category`, `cat`, `kategorie`? Konzistentní napříč pluginy, které to čtou?
-- [ ] Tag — plural (`tags`) i single (`tag`) — konzistentní?
-
-### Datum a čas
-- [ ] `created_at`, `updated_at`, `date`, `datetime`, `timestamp` — sémantika každého jasně vymezená?
-- [ ] Ve stringu (ISO) vs objekt (datetime) — konzistentní typ napříč místy?
-
-### Metadata a extra
-- [ ] `meta` vs `metadata` vs `extra` vs `attrs` — konzistentní volba pro "další data"?
-
-### Photo dict (napříč `photos()` a JS)
-Photo container ze `photos(row_number)` má klíče `primary`, `additional`, `all`, `count`, `has_photos`. Photo dict má `base_name`, `src`, `srcset`, `sources`, `variants`, `width`, `height`, `focal_point`.
-- [ ] Používá kterýkoli plugin (JS nebo Python) jiné pojmenování pro tytéž věci?
-- [ ] `has_photos` (bool s `has_` prefix) — jiné bool klíče používají stejný prefix, nebo někde `is_x`, někde bez prefixu?
-
-### Config klíče vs data klíče
-- [ ] Pokud config klíč (např. `output`) a data pole (např. `output_path`) souvisí, jsou pojmenovány konzistentně (společný prefix, jasná vazba)?
-
-### Data attributes v JS ↔ šablony
-- [ ] `data-share-url` v šabloně → `dataset.shareUrl` v JS — jméno je shodné (jen kebab vs camel)?
-- [ ] Prefix pluginu (`data-share-*`, `data-filter-*`) — dodržený všude?
-
-## Zvláštní pozornost
-
-- **Kolize sémantiky:** dva pluginy použijí `key` pro jinou věc → matoucí čtenáři. → recommended.
-- **Sémantický overload:** stejné jméno (`slug`) používané pro záznam, kategorii i URL fragment — pokud každé má jiný obor hodnot, může to způsobit bug. → flag jako recommended, doporuč rozlišit prefixem (`record_slug`, `category_slug`, `url_slug`) nebo dokumentací.
+- Jeden význam má v různých projektech různá jména (`url` × `href` × `link`, `path` × `file_path`, `meta` × `metadata`) → **recommended**. Kanonické je jméno z core.
+- Jedno jméno má ve dvou projektech jiný význam (`key`, `slug`) → **recommended**. Doporuč rozlišit jménem nebo dokumentací.
+- Jméno se mezi vrstvami nemění jen podle konvence vrstvy (`base_name` v Pythonu, `photoId` v JS) → **recommended**.
+- Pravdivostní klíče mají v jednom projektu různé předpony (`has_`, `is_`, bez předpony) pro stejný druh informace → **nice-to-have**.
+- Datum a čas: jedna věc jednou jako ISO řetězec, jindy jako `datetime` → **recommended**.
