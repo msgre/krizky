@@ -18,12 +18,35 @@ Soubory v `.claude/skills/review-consistency/`: `SKILL.md`, `report-format.md` a
   - zbytek z konverzace „uživatel na něj výslovně upozornil“.
 - Celý skill je česky.
 
-## Poznámky
-- Při revizi se ukázalo, že zastaralé jsou i části `docs/guidelines/`:
-  - `docs-sync.md`: „CLAUDE.md aktuálně chybí ve všech pluginech“, sekce o `work/` v pluginech;
-  - `python.md`: `krizky.testing` „po jeho vzniku“;
-  - `cross-language.md`: „aktuální anti-pattern“ se `sources.photos.base_url`;
-  - sekce „Skill enforcement“ pro zrušený `implement-review`.
+## Úklid guidelines
+Při revizi se ukázalo, že zastaralé jsou i `docs/guidelines/`. Upravené soubory:
 
-  Neměnil jsem je, první běh nového skillu je zachytí v sekci „Guidelines k revizi“.
+- **Všechny:** pryč zbytky zrušeného skillu `implement-review` (věty „Load this file when…“, sekce „Skill enforcement“).
+- **`python.md`:**
+  - opsaná konfigurace ruff (neodpovídala, chyběly TID a banned-api) → odkaz na `pyproject.toml` core a `scripts/verify`,
+  - `from __future__` jen jako zákaz (TID251),
+  - příklad docstringu podle skutečného `register_plugin_templates` (dřív tvrdil `ValueError`),
+  - příklad výjimek s obecnými jmény místo neexistujících tříd photos,
+  - pryč `krizky.testing` a návod na `uv add`,
+  - „Před commitem“ → `scripts/verify`.
+- **`javascript.md`:**
+  - `.eslintrc.json`, `.prettierrc.json` a neexistující `.editorconfig` → popis shodných `eslint.config.mjs` a `.prettierrc.json` v pluginech,
+  - `package.json` je jen pro vývojové nástroje,
+  - „Před commitem“ → `scripts/verify`.
+- **`docs-sync.md`:**
+  - pryč sekce o chybějícím `CLAUDE.md` v pluginech, `work/` v pluginech, interakci s config-style-guide a post-commit verifikaci,
+  - z tabulky vypadl sloupec `work/` log (řeší ho `CLAUDE.md`),
+  - přibyly `docs/plugins.md` a tabulky šablon v `CLAUDE.md`.
+- **`cross-language.md`:**
+  - cross-plugin data sharing bez „aktuálního“ stavu, s cestou ke starému návrhu hooku,
+  - commity odkazují na `CLAUDE.md` místo paměti,
+  - verifikační kroky bez duplikace `scripts/verify`.
+- **`security.md`:** pryč „Skill enforcement“.
+
+Odkazy: první řádek `eslint.config.mjs` ve filters, map a share odkazoval na odstraněný blok `.eslintrc.json` (PR msgre/krizky-filters#10, msgre/krizky-map#4, msgre/krizky-share#4). Názvy sekcí, na které odkazuje skill a `pyproject.toml` (`python.md`), zůstaly. Historické tikety v `.swarm/` jsem neměnil.
+
+## Otevřená otázka
+`security.md` › Path traversal požaduje, aby relativní cesta z configu nevedla mimo `config_dir`. `krizky.plugin_helpers.resolve_path` to nekontroluje. Rozhodnout, jestli platí guideline (doplnit kontrolu do helperu), nebo helper (config píše vlastník webu, guideline zmírnit).
+
+## Poznámky
 - Skill se zatím nespouštěl.

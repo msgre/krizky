@@ -37,7 +37,7 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | —    | Swarm filters-core-helpers (krizky-filters na core 0.2: register_plugin_templates, copy_plugin_assets) | DONE (PR #8 sloučen, finální PR #9 sloučen) | [2026-11-14-03-filters-core-helpers.md](2026-11-14-03-filters-core-helpers.md) |
 | —    | Swarm photos-core-helpers (krizky-photos na core 0.2: resolve_path pro focal points, PhotosFetchError) | DONE (PR #2 sloučen, finální PR #3 sloučen) | [2026-11-14-04-photos-core-helpers.md](2026-11-14-04-photos-core-helpers.md) |
 | —    | Uzavření migrace pluginů na core 0.2 (logy, OVERVIEW, lock krizky-json) | DONE (krizky-json PR #2 sloučen) | [2026-11-14-05-core-helpers-wrapup.md](2026-11-14-05-core-helpers-wrapup.md) |
-| —    | Revize skillu review-consistency (veřejné API z docs/plugins.md, pravidla místo otázek, ověření nálezů, srovnání s minulým reportem) | DONE (PR otevřen) | [2026-11-14-06-review-consistency-revize.md](2026-11-14-06-review-consistency-revize.md) |
+| —    | Revize skillu review-consistency a úklid zastaralých guidelines | DONE (PR otevřen) | [2026-11-14-06-review-consistency-revize.md](2026-11-14-06-review-consistency-revize.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 

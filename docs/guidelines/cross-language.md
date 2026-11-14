@@ -20,7 +20,7 @@ const paginationBoundary = config.paginationBoundary ?? 1;
 const gridSelector = config.gridSelector;
 ```
 
-**Anti-vzor** (blocker v původním reportu):
+**Anti-vzor:**
 - `pagination_window` (Python) → `window` (JS) — zkrácení + kolize s built-in `window` globálem.
 - `foo_bar_baz` → `foo` — ztráta informace.
 
@@ -39,24 +39,22 @@ Prefix per plugin (viz `guidelines/javascript.md`). Konzistentně napříč šab
 
 ## Cross-plugin data sharing
 
-**Aktuální anti-pattern:** map a filters čtou `sources.photos.base_url` přímo z configu → coupling na photos plugin.
+**Anti-pattern:** plugin čte config sekci jiného pluginu (např. map a filters čtou `sources.photos.base_url`). Vzniká tím vazba na konkrétní plugin.
 
-**Preferované řešení (dnes):** duplikovat do vlastního configu:
+**Preferované řešení:** hodnotu má plugin ve vlastním configu, i za cenu, že ji uživatel zadá dvakrát:
 ```yaml
 site:
   map:
-    thumbnail_base_url: https://photos.example.com  # user retype
+    thumbnail_base_url: https://photos.example.com
 ```
 
-**Future řešení:** nový hook `provide_shared_context` (viz `proposals/hook-changes.md`). Ne teď.
-
-**Kdy skill toto implementuje:** jen když to finding explicitně řekne. Nedělat proaktivní refactor.
+Obecné řešení by byl hook pro sdílená data mezi pluginy. Návrh `provide_shared_context` je v `reports/2026-08-17-2013/proposals/hook-changes.md`, zatím se neimplementuje.
 
 ## Nemíchat jazyky v odpovědi user-facing
 
 - Log messages, docstringy, code comments → **angličtina**.
 - README, CLAUDE.md, PLAN.md, work/*.md → **čeština**.
-- Commit messages → **čeština** (dle memory `feedback_commits.md`).
+- Commit messages → **čeština** (`CLAUDE.md` › Git).
 - Config klíče (v YAML) → **angličtina** (matching konvence: `sources`, `pages`, `path`, `template`, ...).
 - Jinja templates: text v šabloně → **čeština** (user-facing), variable names / macro parameters → **angličtina**.
 
@@ -75,16 +73,13 @@ Pro entitu, která existuje v Python, YAML, JS i HTML — použij konzistentní 
 
 ## Escape na hranicích
 
-- **HTML rendering z Pythonu:** vždy Jinja auto-escape, nebo explicitní `html.escape(value, quote=True)`. **Ne** manuální `.replace("&", "&amp;")` (viz historický finding v krizky-share).
+- **HTML rendering z Pythonu:** vždy Jinja auto-escape, nebo explicitní `html.escape(value, quote=True)`. **Ne** manuální `.replace("&", "&amp;")`.
 - **JSON rendering z Pythonu do JS:** `json.dumps(data, ensure_ascii=False)` — musí produkovat validní JSON i pro non-ASCII texty (české znaky). ensure_ascii=True by escape-oval, což je zbytečné plýtvání bytes.
 - **JS insertion do DOM:** `textContent` pro plain text, nikdy `innerHTML` pro user data.
 
-## Verifikační kroky (cross-language)
+## Změna, která se týká Pythonu i JS
 
-Když finding dotýká oboje:
-
-1. Změň Python straně, `uv run ruff check --fix` + `uv run ruff format`.
-2. Změň JS straně, `npx eslint` + `npx prettier --write`.
-3. Grep na starý název napříč **oběma jazyky** — nesmí nic zbýt.
-4. Update README (mapping tabulky, YAML příklady) i docs/*.md.
-5. Commit jako 1 commit (change přeruší build, kdyby byl split).
+1. Starý název grepni v **obou jazycích** i v šablonách: nesmí nic zůstat.
+2. Aktualizuj README (YAML příklady, mapovací tabulky) a `docs/*.md`.
+3. Obě strany změň v jednom commitu, rozdělená změna by mezi commity rozbila build.
+4. `scripts/verify` musí skončit s exit 0.

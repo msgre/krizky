@@ -1,6 +1,6 @@
 # Guidelines: security
 
-Load jen když finding dotýká: HTML output, SQL query, path handling, subprocess, external API calls, nebo secrets.
+Platí pro HTML výstup, SQL, cesty z configu, subprocess, externí API a secrets.
 
 ## HTML/XSS escape
 
@@ -54,18 +54,3 @@ def resolve_path(user_path: str, config_dir: Path) -> Path:
 - **JSON:** OK, native Python `json.loads()` je bezpečný.
 - **YAML:** `yaml.safe_load()`, **nikdy** `yaml.load()` (arbitrary code execution).
 - **Pickle:** **nikdy** unpickle user-provided data — arbitrary code execution.
-
-## Skill enforcement
-
-Skill při každé změně souboru, který spadá do security-relevant kategorií (HTML/SQL/subprocess/API), **rychle projede checklist**:
-
-- Pattern `.replace("&", "&amp;")` → warning, refactor na `html.escape`.
-- Pattern `f"...{var}..."` v SQL context → **stop**, refactor na parametrizovaný.
-- Pattern `yaml.load(` bez `safe_load` → **stop**, refactor.
-- Pattern `shell=True` v subprocess → warning, refactor pokud user vstup.
-- Pattern `pickle.load(` na user data → **stop**, refactor nebo zamítni.
-- Pattern `requests.<method>(url` bez `timeout=` → warning, přidat timeout.
-
-Pokud finding sám je security-related (např. "krizky-share používá ruční escape místo html.escape") → skill je gramotný to opravit dle výše.
-
-Pokud finding **není** security-related, ale při editaci skill zahlédne security anti-pattern → **flag do output** (spotted, not fixed), NErefactor mimo scope.

@@ -2,76 +2,9 @@
 
 Vanilla JS, žádný framework (React/Angular/Vue/Svelte jsou explicitně vyloučené). Kvalitní third-party balíčky OK (viz "Package selection" níže). Cílový browser: moderní evergreen (Chromium/Firefox/Safari poslední 2 roky, Firefox ESR OK).
 
-Load this file when a finding touches JS code.
+## ESLint a Prettier
 
-## ESLint + Prettier config
-
-Přidat do každého pluginu, který má JS (`_plugins/<name>/`):
-
-### `.eslintrc.json`
-
-```json
-{
-  "root": true,
-  "env": {
-    "browser": true,
-    "es2022": true
-  },
-  "parserOptions": {
-    "ecmaVersion": 2022,
-    "sourceType": "script"
-  },
-  "extends": ["eslint:recommended"],
-  "rules": {
-    "no-var": "error",
-    "prefer-const": "error",
-    "prefer-arrow-callback": "error",
-    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
-    "eqeqeq": ["error", "always"],
-    "curly": ["error", "all"],
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
-    "no-implicit-globals": "error",
-    "prefer-template": "warn",
-    "object-shorthand": ["warn", "always"]
-  },
-  "ignorePatterns": ["node_modules/", "dist/", "*.min.js"]
-}
-```
-
-### `.prettierrc.json`
-
-```json
-{
-  "printWidth": 100,
-  "tabWidth": 2,
-  "useTabs": false,
-  "semi": true,
-  "singleQuote": true,
-  "trailingComma": "es5",
-  "arrowParens": "always",
-  "endOfLine": "auto"
-}
-```
-
-### Root workspace `.editorconfig` (aby všechny pluginy měly stejné basics)
-
-```ini
-root = true
-
-[*]
-indent_style = space
-indent_size = 2
-end_of_line = lf
-charset = utf-8
-trim_trailing_whitespace = true
-insert_final_newline = true
-
-[*.py]
-indent_size = 4
-
-[Makefile]
-indent_style = tab
-```
+Pluginy s JS mají `eslint.config.mjs` (flat config ESLint 9+) a `.prettierrc.json`. Oba soubory jsou ve všech pluginech shodné byte po bytu a `scripts/verify` je vynucuje (ESLint, Prettier, `node --test` pro `tests/js/*.test.mjs`). Nový plugin s JS je zkopíruje z existujícího pluginu. Změna konfigurace se dělá ve všech pluginech najednou.
 
 ## JS quality — canonical patterns
 
@@ -160,20 +93,13 @@ Před přidáním balíčku ověř **všechny** kriteria:
 8. **Tree-shakeable (JS):** balíček exportuje ES modules a nemá top-level side effects.
 9. **Žádné katastrofální transitive deps:** rychlý `npm ls <pkg>` / `pipdeptree` — hledat balíčky s 50+ transitive deps (známé warning sign).
 
-Skill má povinnost při navrhování nového balíčku ověřit body 1-5 a **oznámit uživateli** před `uv add` / `npm install`. Body 6-9 uvést jako sanity check.
+Před `uv add` nebo `npm install` ověř body 1–5 a zeptej se uživatele. Body 6–9 uveď jako doplňkovou kontrolu.
 
 **Preferuj stdlib.** Než přidáš 3rd party dep, pokus se to napsat s pomocí stdlib. Rule of thumb: <30 řádků, kde stdlib nabízí building blocks → nepřidávat dep.
 
 ## Před commitem
 
-Pro každý změněný `*.js` soubor:
-
-1. `npx eslint <file>` (pokud .eslintrc existuje v projektu) — clean.
-2. `npx prettier --check <file>` — pass. Pokud fail: `npx prettier --write <file>`, re-check.
-3. `node --check <file>` — syntax pass.
-4. Manuální browser sanity check pokud změna dotýká DOM interakce (skill to sám nespustí, ale upozorní uživatele v log entry: "Doporučuji manuální test v prohlížeči").
-
-Pokud eslint/prettier config v projektu chybí, skill navrhne přidání (viz sekce nahoře) a zeptá se — **ne** ho přidá automaticky. Přidání linter configu je separátní finding.
+`scripts/verify` musí skončit s exit 0. Když změna mění interakci s DOM, uveď v PR, že je potřeba ruční test v prohlížeči.
 
 ## Anti-patterns v JS
 
@@ -186,14 +112,13 @@ Pokud eslint/prettier config v projektu chybí, skill navrhne přidání (viz se
 - Inline event handlery v HTML (`onclick="..."`). Použij `addEventListener`.
 - `document.write()`.
 - `innerHTML` s user-controlled contentem bez escape. Použij `textContent` nebo DOMPurify (pokud opravdu potřebuješ HTML).
-- Console.log v committnutém kódu (ESLint pravidlo to flagne).
 
-## Cizí JS knihovny v projektu (npm not required)
+## Cizí JS knihovny
 
-Aktuální ekosystém: **žádný `package.json`, žádný build step.** JS soubory jsou zkopírované do output přímo z `assets/`.
+Žádný build step: JS se kopíruje do výstupu přímo z `assets/`. `package.json` v pluginu (`private`) nese jen vývojové nástroje (ESLint, Prettier), runtime závislosti nemá.
 
 Pokud chceš přidat 3rd party knihovnu:
 
 - **Preferovaně:** uživatel si ji stáhne sám (jako Leaflet v krizky-map) a v configu odkáže URL. Plugin ji nedodává.
 - **Výjimka:** velmi malé utility (< 5KB gzipped, žádné závislosti) — lze zkopírovat do `assets/<plugin>/vendor/<name>.js` a includnout. Vždy s licencí + attributionem v hlavičce.
-- **Nikdy:** vlastní `package.json` v pluginu, dokud si celý ekosystém neustanoví jednotný build tooling.
+- **Nikdy:** runtime závislosti v `package.json` pluginu, dokud ekosystém nemá jednotný build.
