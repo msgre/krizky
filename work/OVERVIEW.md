@@ -31,6 +31,7 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | —    | /swarm:init a příprava krizky-map pro swarm | DONE (map, photos, share a json připravené, PR #1 sloučeny; kontrola všech pluginů 2026-11-12) | [2026-11-11-02-swarm-init-map.md](2026-11-11-02-swarm-init-map.md) |
 | —    | Úklid core a přesun pluginů vedle core (příprava core pro swarm) | IN PROGRESS (PR `core-cleanup` #1 sloučený; `/swarm:init` hotový, PR `swarm-setup` #2 čeká na sloučení) | [2026-11-12-01-core-cleanup.md](2026-11-12-01-core-cleanup.md) · [2026-11-12-02-swarm-init-core.md](2026-11-12-02-swarm-init-core.md) |
 | —    | Swarm hooks-errors (odstranění nepoužívaných hooků, jednořádkový výpis chyb pluginů) | DONE (PR #3 a #4 sloučeny, finální PR čeká) | [2026-11-13-01-hooks-errors.md](2026-11-13-01-hooks-errors.md) |
+| —    | Swarm plugin-helpers (modul plugin_helpers, hook copy_plugin_assets, v0.2.0) | DONE (PR #6 a #7 sloučeny, finální PR čeká) | [2026-11-13-02-plugin-helpers.md](2026-11-13-02-plugin-helpers.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 

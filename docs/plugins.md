@@ -14,7 +14,7 @@ from krizky.hooks import hookimpl
 
 class MyPlugin:
     @hookimpl
-    def prepare_jinja2_environment(self, env, config):
+    def prepare_jinja2_environment(self, env, config, config_dir):
         env.globals["my_helper"] = lambda x: x.upper()
 
     @hookimpl
@@ -61,13 +61,13 @@ Kde `myplugin:plugin` je `<modul>:<atribut>`. Po `pip install` se plugin automat
 
 ## Dostupné hooky
 
-### `prepare_jinja2_environment(env, config)`
+### `prepare_jinja2_environment(env, config, config_dir)`
 
 Voláno jednou před renderingem, po registraci core filtrů (`md`, `mdtext`, `strftime`). Vhodné pro přidání vlastních filtrů nebo globálních proměnných.
 
 ```python
 @hookimpl
-def prepare_jinja2_environment(self, env, config):
+def prepare_jinja2_environment(self, env, config, config_dir):
     env.filters["muj_filter"] = lambda v: v.strip()
     env.globals["my_callable"] = MyCallable(config)
 ```
@@ -96,6 +96,31 @@ def register_commands(self, cli):
         click.echo("Hello from plugin!")
 ```
 
+### `copy_plugin_assets(output_dir, config, config_dir)`
+
+Voláno **právě jednou za build**: po zkopírování assetů projektu (`site.assets`) a před vykreslením první stránky, tedy před prvním `after_page_written`. Plugin si proto nemusí hlídat, aby assety kopíroval jen jednou. Všechny implementace jsou zavolány, návratová hodnota se ignoruje.
+
+- `output_dir`: absolutní cesta k výstupu webu,
+- `config`: celý config,
+- `config_dir`: adresář s `config.yaml`.
+
+Assety pluginu patří do `output_dir/<jméno-pluginu>/`.
+
+```python
+from pathlib import Path
+
+from krizky.hooks import hookimpl
+from krizky.plugin_helpers import replace_tree
+
+
+class MyPlugin:
+    @hookimpl
+    def copy_plugin_assets(self, output_dir, config, config_dir):
+        replace_tree(Path(__file__).parent / "assets", output_dir / "myplugin")
+```
+
+Hook existuje od krizky 0.2.0. Starší core neznámý hookimpl tiše ignoruje, plugin proto má vyžadovat `krizky>=0.2`.
+
 ### `after_page_written(page_cfg, html_path, output_dir, records, config)`
 
 Voláno po zápisu každé logické stránky. Všechny implementace jsou zavolány.
@@ -123,6 +148,54 @@ def after_page_written(self, page_cfg, html_path, output_dir, records, config):
             w.writeheader()
             w.writerows(records)
 ```
+
+Assety kopíruj v `copy_plugin_assets`, ne v `after_page_written`. V `after_page_written` zůstávají jen soubory generované per stránka (CSV, sitemap a podobně).
+
+---
+
+## Pomocné funkce pro pluginy
+
+Modul `krizky.plugin_helpers` obsahuje funkce, které pluginy jinak opakují.
+
+### `register_plugin_templates(env, templates_dir)`
+
+Vloží `FileSystemLoader(templates_dir)` do `ChoiceLoader` prostředí `env` hned za první loader (šablony projektu) a před vestavěné šablony core. Šablony projektu tak přebijí šablony pluginu a ty přebijí vestavěné. Opakované volání se stejnou cestou loader nepřidá znovu. Když `env.loader` není `ChoiceLoader`, funkce nic neudělá. Přijímá `str` i `Path`.
+
+### `replace_tree(source, target)`
+
+Zkopíruje adresář `source` do `target`. Když `target` existuje, nejdřív ho celý smaže, takže ve výstupu nezůstanou soubory, které plugin už nemá. Chybějící nadřazené adresáře `target` vytvoří.
+
+### `resolve_path(path, config_dir) → Path | None`
+
+Převede cestu z configu na absolutní `Path`. `None` nebo prázdný řetězec vrátí `None`. Relativní cestu vyhodnotí vůči `config_dir`, absolutní nechá na místě. Výsledek je vždy `.resolve()`. Přijímá `str` i `Path`.
+
+### Příklad
+
+```python
+from pathlib import Path
+
+from krizky.hooks import hookimpl
+from krizky.plugin_helpers import register_plugin_templates, replace_tree, resolve_path
+
+PLUGIN_DIR = Path(__file__).parent
+
+
+class MyPlugin:
+    @hookimpl
+    def prepare_jinja2_environment(self, env, config, config_dir):
+        register_plugin_templates(env, PLUGIN_DIR / "templates")
+
+    @hookimpl
+    def copy_plugin_assets(self, output_dir, config, config_dir):
+        # volitelná cesta z configu, relativní k config.yaml
+        custom = resolve_path(config.get("myplugin", {}).get("assets"), config_dir)
+        replace_tree(custom or PLUGIN_DIR / "assets", output_dir / "myplugin")
+```
+
+### Konvence
+
+- Assety pluginu patří do `output_dir/<jméno-pluginu>/`.
+- Šablony pluginu leží v jeho adresáři `templates/`.
 
 ---
 

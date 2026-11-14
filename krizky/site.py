@@ -187,6 +187,8 @@ def _generate(
             base_ctx.update(extra)
 
     _copy_assets(site, config_dir, output_dir)
+    if pm is not None:
+        pm.hook.copy_plugin_assets(output_dir=output_dir, config=config, config_dir=config_dir)
 
     for page_name, page_cfg in site.get("pages", {}).items():
         paginate_by = page_cfg.get("paginate_by", global_paginate_by)
