@@ -29,9 +29,14 @@ Plná specifikace je v `../PLAN.md` (relativně k tomuto souboru).
 | —    | Swarm naming-logger (přejmenování FiltersPlugin, logger) | DONE (krizky-filters PR #4 sloučen, retro hotové) | [2026-11-09-01-naming-logger.md](2026-11-09-01-naming-logger.md) · [2026-11-10-01-naming-logger.md](2026-11-10-01-naming-logger.md) |
 | —    | Swarm js-only-widget (filtrovací widget jen s JS) | DONE (krizky-filters PR #7 sloučen) | [2026-11-11-01-js-only-widget.md](2026-11-11-01-js-only-widget.md) |
 | —    | /swarm:init a příprava krizky-map pro swarm | DONE (map, photos, share a json připravené, PR #1 sloučeny; kontrola všech pluginů 2026-11-12) | [2026-11-11-02-swarm-init-map.md](2026-11-11-02-swarm-init-map.md) |
-| —    | Úklid core a přesun pluginů vedle core (příprava core pro swarm) | IN PROGRESS (PR `core-cleanup` #1 sloučený; `/swarm:init` hotový, PR `swarm-setup` #2 čeká na sloučení) | [2026-11-12-01-core-cleanup.md](2026-11-12-01-core-cleanup.md) · [2026-11-12-02-swarm-init-core.md](2026-11-12-02-swarm-init-core.md) |
-| —    | Swarm hooks-errors (odstranění nepoužívaných hooků, jednořádkový výpis chyb pluginů) | DONE (PR #3 a #4 sloučeny, finální PR čeká) | [2026-11-13-01-hooks-errors.md](2026-11-13-01-hooks-errors.md) |
-| —    | Swarm plugin-helpers (modul plugin_helpers, hook copy_plugin_assets, v0.2.0) | DONE (PR #6 a #7 sloučeny, finální PR čeká) | [2026-11-13-02-plugin-helpers.md](2026-11-13-02-plugin-helpers.md) |
+| —    | Úklid core a přesun pluginů vedle core (příprava core pro swarm) | DONE (PR `core-cleanup` #1 a `swarm-setup` #2 sloučeny) | [2026-11-12-01-core-cleanup.md](2026-11-12-01-core-cleanup.md) · [2026-11-12-02-swarm-init-core.md](2026-11-12-02-swarm-init-core.md) |
+| —    | Swarm hooks-errors (odstranění nepoužívaných hooků, jednořádkový výpis chyb pluginů) | DONE (PR #3 a #4 sloučeny, finální PR #5 sloučen) | [2026-11-13-01-hooks-errors.md](2026-11-13-01-hooks-errors.md) |
+| —    | Swarm plugin-helpers (modul plugin_helpers, hook copy_plugin_assets, v0.2.0) | DONE (PR #6 a #7 sloučeny, finální PR #8 sloučen) | [2026-11-13-02-plugin-helpers.md](2026-11-13-02-plugin-helpers.md) |
+| —    | Swarm map-core-helpers (krizky-map na core 0.2: plugin_helpers, copy_plugin_assets) | DONE (PR #2 sloučen, finální PR #3 sloučen) | [2026-11-14-01-map-core-helpers.md](2026-11-14-01-map-core-helpers.md) |
+| —    | Swarm share-core-helpers (krizky-share na core 0.2: plugin_helpers, copy_plugin_assets) | DONE (PR #2 sloučen, finální PR #3 sloučen) | [2026-11-14-02-share-core-helpers.md](2026-11-14-02-share-core-helpers.md) |
+| —    | Swarm filters-core-helpers (krizky-filters na core 0.2: register_plugin_templates, copy_plugin_assets) | DONE (PR #8 sloučen, finální PR #9 sloučen) | [2026-11-14-03-filters-core-helpers.md](2026-11-14-03-filters-core-helpers.md) |
+| —    | Swarm photos-core-helpers (krizky-photos na core 0.2: resolve_path pro focal points, PhotosFetchError) | DONE (PR #2 sloučen, finální PR #3 sloučen) | [2026-11-14-04-photos-core-helpers.md](2026-11-14-04-photos-core-helpers.md) |
+| —    | Uzavření migrace pluginů na core 0.2 (logy, OVERVIEW, lock krizky-json) | DONE (krizky-json PR #2 otevřen) | [2026-11-14-05-core-helpers-wrapup.md](2026-11-14-05-core-helpers-wrapup.md) |
 | 5    | Photos                          | TODO    | —          |
 | 6    | Kompletní build + integrace     | TODO    | —          |
 
