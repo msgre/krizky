@@ -45,8 +45,8 @@ Při revizi se ukázalo, že zastaralé jsou i `docs/guidelines/`. Upravené sou
 
 Odkazy: první řádek `eslint.config.mjs` ve filters, map a share odkazoval na odstraněný blok `.eslintrc.json` (PR msgre/krizky-filters#10, msgre/krizky-map#4, msgre/krizky-share#4). Názvy sekcí, na které odkazuje skill a `pyproject.toml` (`python.md`), zůstaly. Historické tikety v `.swarm/` jsem neměnil.
 
-## Otevřená otázka
-`security.md` › Path traversal požaduje, aby relativní cesta z configu nevedla mimo `config_dir`. `krizky.plugin_helpers.resolve_path` to nekontroluje. Rozhodnout, jestli platí guideline (doplnit kontrolu do helperu), nebo helper (config píše vlastník webu, guideline zmírnit).
+## Rozhodnutí: path traversal
+`security.md` › Path traversal požadoval, aby relativní cesta z configu nevedla mimo `config_dir`, což `krizky.plugin_helpers.resolve_path` nekontroluje. Uživatel rozhodl, že platí helper: config píše vlastník webu a je důvěryhodný. Guideline teď rozlišuje cesty z configu (důvěryhodné, `resolve_path`, `..` se neblokuje) a cesty odvozené z dat (slug, jména souborů z Drive), které musí po `resolve()` zůstat v cílovém adresáři.
 
 ## Poznámky
 - Skill se zatím nespouštěl.

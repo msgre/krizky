@@ -17,23 +17,15 @@ Platí pro HTML výstup, SQL, cesty z configu, subprocess, externí API a secret
 
 ## Path traversal
 
-Když plugin resolve-uje cesty ze user config:
+**Cesty z configu** jsou důvěryhodné. `config.yaml` píše vlastník webu a krizky ho spouští nad vlastním projektem. Plugin je převádí přes `resolve_path` z `krizky.plugin_helpers`: relativní cesta se vyhodnotí vůči `config_dir`, absolutní zůstane, `..` se neblokuje.
+
+**Cesty odvozené z dat** (slug záznamu, jméno souboru z Google Drive, hodnota z tabulky) důvěryhodné nejsou. Data může upravovat i někdo jiný než vlastník webu. Výsledná cesta po `Path.resolve()` musí ležet uvnitř cílového adresáře (typicky výstupu webu), jinak chyba:
 
 ```python
-def resolve_path(user_path: str, config_dir: Path) -> Path:
-    p = Path(user_path)
-    if p.is_absolute():
-        return p  # user explicit
-    resolved = (config_dir / p).resolve()
-    # Sanity check: konečná cesta musí být pod config_dir (žádné ../)
-    if config_dir.resolve() not in resolved.parents and resolved != config_dir.resolve():
-        raise ValueError(f"Path escapes config_dir: {user_path}")
-    return resolved
+target = (output_dir / f"{slug}.html").resolve()
+if not target.is_relative_to(output_dir.resolve()):
+    raise FooError(f"Path escapes output directory: {slug!r}")
 ```
-
-- Použij `Path.resolve()` k normalizaci.
-- Zkontroluj, že výsledek je pod `config_dir` — jinak `..` mohou dostat plugin mimo scope.
-- Výjimka: absolutní cesty user explicitně zadal — ne blokovat.
 
 ## Subprocess
 
