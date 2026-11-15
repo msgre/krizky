@@ -49,6 +49,7 @@ Mimo swarm, po dokončení implementace (nebo na konci session s uživatelem) **
 
 ## Práce na projektu
 
+- **Aktuální plán a stav je v `ROADMAP.md`.** Na začátku session přečti sekci „Teď“ a na konci ji přepiš. Platí hranice framework × web popsaná v sekci „Cíl“.
 - Projekt je dokumentován v `work/OVERVIEW.md` a `PLAN.md`
 - Kód je v `krizky/` package, testy v `tests/`
 - Spouštění testů: `uv run pytest` nebo `python -m pytest`; celá kontrola přes `scripts/verify`
